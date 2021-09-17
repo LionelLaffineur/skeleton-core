@@ -465,10 +465,12 @@ class Media {
 	private static function fail() {
 		$application = \Skeleton\Core\Application::get();
 		if ($application->event_exists('media', 'not_found')) {
-			$application->call_event_if_exists('media', 'not_found', [ ]);
+			$application->call_event_if_exists('media', 'not_found');
 		} else {
 			throw new \Skeleton\Core\Exception\Media\Not\Found('File not found');
 		}
+
+		exit;
 	}
 
 	/**
@@ -477,23 +479,25 @@ class Media {
 	 * @param $request array
 	 * @access public
 	 */
-	public static function detect($request_uri) {
+	public static function detect($request_uri): bool {
 		// Don't bother looking up /
 		if ($request_uri == '/') {
-			return;
+			return false;
 		}
 
 		$request = pathinfo($request_uri);
 
 		if (!isset($request['extension'])) {
-			return;
+			return false;
 		}
 
 		$classname = get_called_class();
 		$media = new $classname($request_uri);
 		if (!$media->has_known_extension()) {
-			return;
+			return false;
 		}
+
 		$media->serve();
+		return true;
 	}
 }
