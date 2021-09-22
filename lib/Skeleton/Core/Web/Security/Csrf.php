@@ -175,7 +175,7 @@ class Csrf {
 			$html = $application->call_event('security', 'csrf_inject', [$html]);
 		} else {
 			$html = preg_replace_callback(
-				'/<form\s.*>/iU',
+				'/<form\s.*>/siU',
 				function ($matches) {
 					return sprintf("%s\n<input name=\"%s\" type=\"hidden\" value=\"%s\" />\n", $matches[0], $this->post_token_name, $this->session_token);
 				},
