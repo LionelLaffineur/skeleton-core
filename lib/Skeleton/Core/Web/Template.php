@@ -110,13 +110,15 @@ class Template {
 	 */
 	 public function render($template, $rewrite_html = true) {
 		$csrf = Security\Csrf::get();
-
 		$this->add_environment('csrf_session_token_name', $csrf->get_session_token_name());
 		$this->add_environment('csrf_header_token_name', $csrf->get_header_token_name());
 		$this->add_environment('csrf_post_token_name', $csrf->get_post_token_name());
 		$this->add_environment('csrf_token', $csrf->get_session_token());
 
 		$replay = Security\Replay::get();
+		$this->add_environment('replay_session_tokens_name', $replay->get_session_tokens_name());
+		$this->add_environment('replay_header_token_name', $replay->get_header_token_name());
+		$this->add_environment('replay_post_token_name', $replay->get_post_token_name());
 
 		$output = $this->template->render($template);
 		$output = $csrf->inject($output);
