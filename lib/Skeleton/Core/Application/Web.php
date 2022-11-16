@@ -62,8 +62,17 @@ class Web extends \Skeleton\Core\Application {
 		$autoloader = new \Skeleton\Core\Autoloader();
 		$autoloader->add_namespace($this->module_namespace, $this->module_path);
 		$autoloader->register();
-	}
 
+		/**
+		 * Configure translation: default = po storage
+		 */
+		if (class_exists('\Skeleton\I18n\Translator')) {
+			$translator = $this->call_event('i18n', 'get_translator');
+			if ($translator !== null) {
+				$translator->save();
+			}			
+		}
+	}
 
 	/**
 	 * Load the config
@@ -133,56 +142,14 @@ class Web extends \Skeleton\Core\Application {
 				// Attempt to find a module by matching paths
 				$module = Module::resolve($this->request_relative_uri);
 			} catch (\Exception $e) {
-				if ($this->event_exists('module', 'not_found')) {
-					$this->call_event_if_exists('module', 'not_found');
-				} else {
-					\Skeleton\Core\Web\HTTP\Status::code_404('module');
-				}
+				$this->call_event('module', 'not_found');
 			}
 		}
 
 		/**
 		 * Set language
 		 */
-		// Set the language to something sensible if it isn't set yet
-		if (class_exists('\Skeleton\I18n\Config') AND isset(\Skeleton\I18n\Config::$language_interface)) {
-			$language_interface = \Skeleton\I18n\Config::$language_interface;
-			if (!class_exists($language_interface)) {
-				throw new \Exception('The language interface does not exists: ' . $language_interface);
-			}
-
-			if (!isset($_SESSION['language'])) {
-				try {
-					$language = $language_interface::detect();
-					$_SESSION['language'] = $language;
-				} catch (\Exception $e) {
-					$language = $language_interface::get_by_name_short($this->config->default_language);
-					$_SESSION['language'] = $language;
-				}
-			}
-
-			if (isset($_GET['language'])) {
-				try {
-					$language = $language_interface::get_by_name_short($_GET['language']);
-					$_SESSION['language'] = $language;
-				} catch (\Exception $e) {
-					$_SESSION['language'] = $language_interface::get_by_name_short($this->config->default_language);
-				}
-			}
-			$this->language = $_SESSION['language'];
-
-			// Configure translation
-			if (class_exists('\Skeleton\I18n\Translator\Storage\Po')) {
-				$translator_storage_po = new \Skeleton\I18n\Translator\Storage\Po();
-				$translator = new \Skeleton\I18n\Translator($this->name);
-				$translator->set_translator_storage($translator_storage_po);
-
-				$translator_extractor_twig = new \Skeleton\I18n\Translator\Extractor\Twig();
-				$translator_extractor_twig->set_template_path($this->template_path);			
-				$translator->set_translator_extractor($translator_extractor_twig);
-				$translator->save();
-			}
-		}
+		$this->handle_i18n();
 
 		/**
 		 * Validate CSRF
@@ -190,11 +157,7 @@ class Web extends \Skeleton\Core\Application {
 		$csrf = \Skeleton\Core\Web\Security\Csrf::get();
 
 		if ($session_properties['resumed'] === true && !$csrf->validate()) {
-			if ($this->event_exists('security', 'csrf_validation_failed')) {
-				$this->call_event_if_exists('security', 'csrf_validation_failed');
-			} else {
-				\Skeleton\Core\Web\HTTP\Status::code_403('CSRF validation failed');
-			}
+			$this->call_event('security', 'csrf_validation_failed');
 		}
 
 		/**
@@ -208,6 +171,50 @@ class Web extends \Skeleton\Core\Application {
 		if ($module !== null) {
 			$module->accept_request();
 		}
+	}
+
+	/**
+	 * Handle i18n
+	 *
+	 * @access private
+	 */
+	private function handle_i18n() {
+		if (!class_exists('\Skeleton\I18n\Config')) {
+			/**
+			 * Skeleton-i18n is not installed, nothing to do
+			 */
+			return;
+		}
+
+		if (!isset(\Skeleton\I18n\Config::$language_interface)) {
+			/**
+			 * This should not happen, there is a default set
+			 */
+			return;
+		}
+
+		$language_interface = \Skeleton\I18n\Config::$language_interface;
+
+		if (!class_exists($language_interface)) {
+			throw new \Exception('The language interface does not exists: ' . $language_interface);
+		}
+
+		/**
+		 * Try to set the language
+		 */
+		if (!isset($_SESSION['language'])) {
+			$_SESSION['language'] = $this->call_event('i18n', 'detect_language');
+		}
+
+		if (isset($_GET['language'])) {
+			try {
+				$language = $language_interface::get_by_name_short($_GET['language']);
+				$_SESSION['language'] = $language;
+			} catch (\Exception $e) {
+				$_SESSION['language'] = $language_interface::get_by_name_short($this->config->default_language);
+			}
+		}
+		$this->language = $_SESSION['language'];
 	}
 
 	/**

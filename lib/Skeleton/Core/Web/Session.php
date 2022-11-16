@@ -25,7 +25,7 @@ class Session {
 	 */
 	public static function start(&$properties = []) {
 		$application = \Skeleton\Core\Application::get();
-		$application->call_event_if_exists('security', 'session_cookie');
+		$application->call_event('security', 'session_cookie');
 
 		session_name($application->config->session_name);
 
@@ -50,9 +50,13 @@ class Session {
 			$url = \Skeleton\Core\Util::rewrite_reverse($url);
 		}
 
-		// Call teardown application event
-		$application = \Skeleton\Core\Application::get();
-		$application->call_event_if_exists('application', 'teardown');
+		// Fixme: teardown requires the current module, we don't have it here
+
+		/*
+			// Call teardown application event
+			$application = \Skeleton\Core\Application::get();
+			$application->call_event('application', 'teardown', []);
+		*/
 
 		// Redirect
 		header('Location: '.$url);

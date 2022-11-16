@@ -40,7 +40,7 @@ abstract class Module {
 
 		// Bootstrap the application
 		$application = \Skeleton\Core\Application::get();
-		$application->call_event_if_exists('application', 'bootstrap', [$this]);
+		$application->call_event('application', 'bootstrap', [$this]);
 
 		// If we have the skeleton-template package installed, find the template and set it up
 		if (class_exists('\Skeleton\Template\Template') === true) {
@@ -57,12 +57,7 @@ abstract class Module {
 
 		// If the request is not allowed, make sure it gets handled properly
 		if ($allowed === false) {
-			// Always check if it can not be handled by an event first
-			if ($application->event_exists('module', 'access_denied') === true) {
-				$application->call_event_if_exists('module', 'access_denied', [$this]);
-			} else {
-				throw new \Exception('Access denied');
-			}
+			$application->call_event('module', 'access_denied', [$this]);
 		} else {
 
 			// Call the bootstrap method if it exists
@@ -80,7 +75,7 @@ abstract class Module {
 		}
 
 		// Call the teardown event if it exists
-		$application->call_event_if_exists('application', 'teardown', [$this]);
+		$application->call_event('application', 'teardown', [$this]);
 	}
 
 	/**

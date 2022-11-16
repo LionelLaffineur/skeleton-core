@@ -131,18 +131,7 @@ class Replay {
 
 		$application = \Skeleton\Core\Application::get();
 
-		if ($application->event_exists('security', 'replay_inject')) {
-			$html = $application->call_event('security', 'replay_inject', [$html]);
-		} else {
-			$html = preg_replace_callback(
-				'/<form\s.*>/iU',
-				function ($matches) {
-					return sprintf("%s\n<input name=\"%s\" type=\"hidden\" value=\"%s\" />\n", $matches[0], $this->post_token_name, bin2hex(random_bytes(25)));
-				},
-				$html
-			);
-		}
-
+		$html = $application->call_event('security', 'replay_inject', [$html, $this->post_token_name, bin2hex(random_bytes(25))]);
 		return $html;
 	}
 
@@ -156,11 +145,6 @@ class Replay {
 
 		// If replay checking is not enabled, don't do anything
 		if ($this->enabled === false) {
-			return true;
-		}
-
-		// If the application has no event to handle replay, don't do anything
-		if (!$application->event_exists('security', 'replay_detected')) {
 			return true;
 		}
 

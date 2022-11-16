@@ -322,14 +322,17 @@ when they are used, they should be located in the `event` directory of your
 application. The filename should be in the form of `Context_name.php`, for
 example `Application.php`.
 
-The class should extend from `Skeleton\Core\Event` and the classname should be
-within the namespace `\App\APP_NAME\Event\Context`, where
+The class should extend from `Skeleton\Core\Application\Event\{Context}` and the classname should be
+within the namespace `\App\APP_NAME\Event\{Context}`, where
 `APP_NAME` is the name of your application, and `Context` is one of the
 available contexts:
 
 - Application
+- Error
+- I18n
 - Media
 - Module
+- Security
 
 Example of a `Module` event class for an application named `admin`:
 
@@ -340,7 +343,7 @@ Example of a `Module` event class for an application named `admin`:
 
     namespace App\Admin\Event;
 
-    class Module extends \Skeleton\Core\Event {
+    class Module extends \Skeleton\Core\Application\Event\Module {
 
         /**
          * Access denied

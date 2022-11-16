@@ -105,13 +105,7 @@ class Csrf {
 	private function set_session_token() {
 		if (!isset($_SESSION[$this->session_token_name])) {
 			$application = \Skeleton\Core\Application::get();
-
-			if ($application->event_exists('security', 'csrf_generate_session_token')) {
-				$this->session_token = $application->call_event('security', 'csrf_generate_session_token');
-			} else {
-				$this->session_token = bin2hex(random_bytes(32));
-			}
-
+			$this->session_token = $application->call_event('security', 'csrf_generate_session_token');
 			$_SESSION[$this->session_token_name] = $this->session_token;
 		} else {
 			$this->session_token = $_SESSION[$this->session_token_name];
@@ -170,19 +164,7 @@ class Csrf {
 		}
 
 		$application = \Skeleton\Core\Application::get();
-
-		if ($application->event_exists('security', 'csrf_inject')) {
-			$html = $application->call_event('security', 'csrf_inject', [$html]);
-		} else {
-			$html = preg_replace_callback(
-				'/<form\s.*>/siU',
-				function ($matches) {
-					return sprintf("%s\n<input name=\"%s\" type=\"hidden\" value=\"%s\" />\n", $matches[0], $this->post_token_name, $this->session_token);
-				},
-				$html
-			);
-		}
-
+		$html = $application->call_event('security', 'csrf_inject', [$html]);
 		return $html;
 	}
 
@@ -195,7 +177,7 @@ class Csrf {
 		$application = \Skeleton\Core\Application::get();
 
 		// Allow the application to override running the validation process completely
-		if ($this->enabled && $application->event_exists('security', 'csrf_validate_enabled')) {
+		if ($this->enabled) {
 			if ($application->call_event('security', 'csrf_validate_enabled') === false) {
 				return true;
 			}
@@ -211,8 +193,8 @@ class Csrf {
 			$submitted_token = null;
 		}
 
-		if ($this->enabled && $application->event_exists('security', 'csrf_validate')) {
-			return $application->call_event('security', 'csrf_validate');
+		if ($this->enabled) {
+			return $application->call_event('security', 'csrf_validate', [ $submitted_token, $this->get_session_token() ]);
 		}
 
 		unset($_POST[$this->post_token_name]);
@@ -220,25 +202,5 @@ class Csrf {
 		if ($this->enabled == false) {
 			return true;
 		}
-
-		// We only validate POST requests
-		// This is probably not the most complete implementation, but let's agree that GET requests should never modify data and we're mostly covered
-		if (getenv('REQUEST_METHOD') === 'POST') {
-			if (empty($submitted_token) || $_SESSION[$this->session_token_name] !== $submitted_token) {
-				if ($application->event_exists('security', 'csrf_validate_failed')) {
-					return $application->call_event('security', 'csrf_validate_failed');
-				} else {
-					return false;
-				}
-			} else {
-				if ($application->event_exists('security', 'csrf_validate_success')) {
-					return $application->call_event_if_exists('security', 'csrf_validate_success');
-				} else {
-					return true;
-				}
-			}
-		}
-
-		return true;
 	}
 }

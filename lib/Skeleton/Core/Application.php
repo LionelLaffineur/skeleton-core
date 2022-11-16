@@ -37,6 +37,14 @@ abstract class Application {
 	public $event_path = null;
 
 	/**
+	 * Event Namespace
+	 *
+	 * @var string $event_namespace
+	 * @access public
+	 */
+	public $event_namespace = null;
+
+	/**
 	 * Name
 	 *
 	 * @var string $name
@@ -126,16 +134,15 @@ abstract class Application {
 		}
 		$this->path = $application_path;
 		$this->event_path = $this->path . '/event/';
+		$this->event_namespace = "\\App\\" . ucfirst($this->name) . "\Event\\";
+
+		if (file_exists($this->event_path)) {
+			$autoloader = new \Skeleton\Core\Autoloader();
+			$autoloader->add_namespace($this->event_namespace, $this->event_path);
+			$autoloader->register();
+		}
 
 		$this->load_config();
-
-		if (class_exists('\Skeleton\I18n\Config') AND isset(\Skeleton\I18n\Config::$language_interface)) {
-			$classname = \Skeleton\I18n\Config::$language_interface;
-			if (!class_exists($classname)) {
-				throw new \Exception('The language interface does not exists: ' . \Skeleton\I18n\Config::$language_interface);
-			}
-			$this->language = $classname::get_by_name_short($this->config->default_language);
-		}
 	}
 
 	/**
@@ -152,7 +159,6 @@ abstract class Application {
 		 * Set some defaults
 		 */
 		$this->config->application_type = '\Skeleton\Core\Application\Web';
-
 		$this->config->read_path($this->path . '/config');
 	}
 
@@ -171,33 +177,29 @@ abstract class Application {
 	 * @param string $action
 	 * @return bool $exists
 	 */
-	public function event_exists($context, $action) {
-		// Check if the event class is already loaded
-		$class = null;
-
+	public function load_event($context) {
 		if (isset($this->events[$context])) {
-			$class = $this->events[$context];
+			return $this->events[$context];
 		}
 
-		if ($class === null) {
-			if (file_exists($this->event_path . '/' . ucfirst($context) . '.php')) {
-				require_once $this->event_path . '/' . ucfirst($context) . '.php';
-				$classname = '\\App\\' . ucfirst($this->name) . '\\Event\\' . ucfirst($context);
-				$class = new $classname;
-				$this->events[$context] = $class;
+		$classname = '\\App\\' . ucfirst($this->name) . '\\Event\\' . ucfirst($context);
+		$default = '\\Skeleton\\Core\\Application\\Event\\' . ucfirst($context);
+
+		if (class_exists($classname)) {
+			if (!is_a($classname, $default, true)) {
+				throw new \Exception('Event ' . $classname . ' should extend from ' . $default);
 			}
+
+			$event = new $classname($this);
+			$this->events[$context] = $event;
+			return $this->events[$context];
 		}
 
-		if ($class === null) {
-			return false;
-		}
-
-		if (!is_callable([$class, $action])) {
-			return false;
-		}
-
-		return true;
+		$event = new $default($this);
+		$this->events[$context] = $event;
+		return $this->events[$context];
 	}
+
 
 	/**
 	 * Call event
@@ -207,11 +209,40 @@ abstract class Application {
 	 * @param string $action
 	 */
 	public function call_event($context, $action, $arguments = []) {
-		if (!$this->event_exists($context, $action)) {
-			throw new Exception('Cannot call event, event ' . $action . ' in context ' . $context . ' does not exists');
-		}
+		$event = $this->load_event($context);
+		return call_user_func_array([$event, $action], $arguments);
+	}
 
-		return call_user_func_array($this->get_event_callable($context, $action), $arguments);
+	/**
+	 * Event exists
+	 *
+	 * @access public
+	 * @param string $context
+	 * @param string $action
+	 */
+	public function event_exists($context, $action) {
+		try {
+			$event = $this->load_event($context);
+		} catch (\Exception $e) {
+			return false;
+		}
+		if (is_callable([$event, $action])) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Get a callable for an event
+	 *
+	 * @access public
+	 * @param string $context
+	 * @param string $action
+	 * @return array
+	 */
+	public function get_event_callable(string $context, string $action) {
+		$event = $this->load_event($context);
+		return [$event, $action];
 	}
 
 	/**
@@ -227,19 +258,7 @@ abstract class Application {
 		}
 
 		return call_user_func_array($this->get_event_callable($context, $action), $arguments);
-	}
-
-	/**
-	 * Get a callable for an event
-	 *
-	 * @access public
-	 * @param string $context
-	 * @param string $action
-	 * @return array
-	 */
-	public function get_event_callable(string $context, string $action) {
-		return [$this->events[$context], $action];
-	}
+	}	
 
 	/**
 	 * Get
@@ -293,21 +312,11 @@ abstract class Application {
 
 		// Match via event
 		foreach ($applications as $application) {
-			if (!$application->event_exists('application', 'detect')) {
-				continue;
-			}
 			if ($application->call_event('application', 'detect', [ $hostname, $request_uri ])) {
 				$matched_applications[] = $application;
 			}
 		}
 
-		// Regular matches
-		foreach ($applications as $application) {
-			if (in_array($hostname, $application->config->hostnames)) {
-				$application->matched_hostname = $hostname;
-				$matched_applications[] = $application;
-			}
-		}
 		// If we don't have any matched applications, try to match wildcards
 		if (count($matched_applications) === 0) {
 			foreach ($applications as $application) {

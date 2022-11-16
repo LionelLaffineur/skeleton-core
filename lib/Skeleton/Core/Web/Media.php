@@ -514,12 +514,7 @@ class Media {
 	 */
 	private static function fail() {
 		$application = \Skeleton\Core\Application::get();
-		if ($application->event_exists('media', 'not_found')) {
-			$application->call_event_if_exists('media', 'not_found');
-		} else {
-			throw new \Skeleton\Core\Exception\Media\Not\Found('File not found');
-		}
-
+		$application->call_event('media', 'not_found');
 		exit;
 	}
 
