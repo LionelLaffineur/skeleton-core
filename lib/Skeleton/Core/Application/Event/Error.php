@@ -19,8 +19,7 @@ class Error extends \Skeleton\Core\Application\Event {
 	 * @return bool $proceed_error_handlers
 	 */
 	public function exception(\Throwable $exception): bool {
-		print_r($exception);
-		return false;
+		return true;
 	}
 
 	/**
@@ -30,10 +29,10 @@ class Error extends \Skeleton\Core\Application\Event {
 	 * This will only be executed when skeleton-error is used combined
 	 * with sentry\sdk
 	 *
-	 * @@ccess public
+	 * @access public
 	 */
-    public function sentry_before_send(\Sentry\Event $event) {
-    	return $event;
-    }
+	public function sentry_before_send(\Sentry\Event $event) {
+		return $event;
+	}
 
 }

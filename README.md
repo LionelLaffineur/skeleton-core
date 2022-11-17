@@ -364,15 +364,16 @@ The different contexts and their events are described below.
 
 The bootstrap method is called before loading the application module.
 
-    public function bootstrap(\Skeleton\Core\Web\Module $module) { }
+	public function bootstrap(\Skeleton\Core\Application\Web\Module $module): void
+
 
 ##### teardown
 
 The teardown method is called after the application's run is over.
 
-    public function teardown(\Skeleton\Core\Web\Module $module) { }
+	public function teardown(\Skeleton\Core\Application\Web\Module $module): void
 
-#### detect
+##### detect
 
 The detect method is called on every request to determine if the application
 should handle the request, or if it should be skipped based on, for example, the
@@ -380,7 +381,64 @@ requested hostname and the request's URI.
 
 This event should return `true` in order to proceed with this application.
 
-    public function detect($hostname, $request_uri): bool { }
+	public function detect($hostname, $request_uri): bool
+
+#### Error context
+
+This context is only available if skeleton-error is installed.
+
+##### exception
+
+The exception method is called on every exeption/error. The method should 
+return a boolean, indicating if skeleton-error should proceed to other 
+error handlers
+
+	public function exception(\Throwable $exception): bool
+
+##### sentry_before_send
+
+The sentry_before_send method can be used to enrich the data that will be sent
+to Sentry with application-specific data (ex the user that logged in)
+
+	public function sentry_before_send(\Sentry\Event $event)
+
+#### I18n context
+
+##### get_translator_extractor
+
+Get a Translator\Extractor for this application. If not provided, a 
+Translator\Extractor\Twig is created for the template-directory of the 
+application.
+
+	public function get_translator_extractor(): \Skeleton\I18n\Translator\Extractor
+
+Get a Translator\Storage for this application. If not provided, a 
+Translator\Storage\Po is created, but only if a default storage path is 
+configured.
+
+	public function get_translator_storage(): \Skeleton\I18n\Translator\Storage
+
+Get a Translator object for this application. If no translation is needed, 
+return null. By default, a translator is created with the storage and 
+extractor of the above methods.
+
+	public function get_translator(): ?\Skeleton\I18n\Translator
+	
+Detect the language for the application. By default, a language is negotiated
+between $_SERVER['HTTP_ACCEPT_LANGUAGE'] and all available languages.
+If a language is returned, it will be stored in the session so this will only
+be triggered the first request.	
+	
+	public function detect_language(): \Skeleton\I18n\LanguageInterface	
+
+#### Media context
+
+##### not_found
+
+The `not_found` method is called whenever a media file is requested which could
+not be found.
+
+	public function not_found(): void
 
 #### Module context
 
@@ -390,34 +448,14 @@ The `access_denied` method is called whenever a module is requested which can
 not be accessed by the user. The optional `secure()` method in the module
 indicates whether the user is granted access or not.
 
-    public function access_denied(\Skeleton\Core\Web\Module $module) { }
+	public function access_denied(\Skeleton\Core\Web\Module $module): void
 
 ##### not_found
 
 The `not_found` method is called whenever a module is requested which does not
 exist.
 
-    public function not_found() { }
-
-#### Media context
-
-##### not_found
-
-The `not_found` method is called whenever a media file is requested which could
-not be found.
-
-    public function not_found() { }
-
-#### Error context
-
-The error event context is not actually part of `skeleton-core`, but rather of
-`skeleton-error`.
-
-##### exception
-
-The `exception` method is called whenever an exception has not been caught.
-
-    public function exception() { }
+	public function not_found(): void
 
 #### Security context
 
@@ -446,16 +484,25 @@ can be found below.
 The `csrf_validate_success` method allows you to override the check result after
 a successful validation. It expects a boolean as a return value.
 
+	public function csrf_validate_success(): bool
+
+
 ##### csrf_validation_failed
 
 The `csrf_validation_failed` method allows you to override the check result
 after a failed validation. It expects a boolean as a return value.
+
+	public function csrf_validation_failed(): bool {
+
 
 ##### csrf_generate_session_token
 
 The `csrf_generate_session_token` method allows you to override the generation
 of the session token, and generate a custom value instead. It expects a string
 as a return value.
+
+	public function csrf_generate_session_token(): string
+
 
 ##### csrf_inject
 
@@ -464,10 +511,16 @@ hidden CSRF token elements in the HTML forms of the rendered template. It
 expects a string as a return value, containing the rendered HTML to be sent back
 to the client.
 
+	public function csrf_inject($html, $post_token_name, $post_token): string
+
+
 ##### csrf_validate
 
 The `csrf_validate` method allows you to override the validation process of the
 CSRF token. It expects a boolean as a return value.
+
+	public function csrf_validate($submitted_token, $session_token): bool
+
 
 ##### replay_detected
 
@@ -483,8 +536,20 @@ if it is present:
         }
     }
 
+##### replay_inject
+
+The `replay_inject` method allows you to override the automatic injection of the
+hidden replay token elements in the HTML forms of the rendered template. It
+expects a string as a return value, containing the rendered HTML to be sent back
+to the client.
+
+	public function csrf_inject($html, $post_token_name, $post_token): string
+
 ##### session_cookie
 
 The `session_cookie` method allows you to set session cookie parameters before
 the session is started. Typically, this would be used to SameSite cookie
 attribute.
+
+	public function session_cookie(): void
+

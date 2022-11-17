@@ -50,13 +50,13 @@ class Security extends \Skeleton\Core\Application\Event {
 			}
 		} else {
 			return true;
-		}	
+		}
 	}
 
 	/**
 	 * csrf_validation_failed
 	 *
-	 * The csrf_validation_failed method allows you to override the check 
+	 * The csrf_validation_failed method allows you to override the check
 	 * result after a failed validation. It expects a boolean as a return value.
 	 *
 	 * @return bool $validated
@@ -66,9 +66,9 @@ class Security extends \Skeleton\Core\Application\Event {
 	}
 
 	/**
-	 * csrf_validation_failed
+	 * csrf_validate_success
 	 *
-	 * The csrf_validate_success method allows you to override the check result 
+	 * The csrf_validate_success method allows you to override the check result
 	 * after a successful validation. It expects a boolean as a return value.
 	 *
 	 * @return bool $validated
@@ -81,7 +81,7 @@ class Security extends \Skeleton\Core\Application\Event {
 	 * csrf_inject
 	 *
 	 * The csrf_inject method allows you to override the automatic injection of
-	 * the hidden CSRF token elements in the HTML forms of the rendered 
+	 * the hidden CSRF token elements in the HTML forms of the rendered
 	 * template.
 	 *
 	 * @access public
@@ -105,7 +105,7 @@ class Security extends \Skeleton\Core\Application\Event {
 	 * replay_inject
 	 *
 	 * The csrf_inject method allows you to override the automatic injection of
-	 * the hidden CSRF token elements in the HTML forms of the rendered 
+	 * the hidden CSRF token elements in the HTML forms of the rendered
 	 * template.
 	 *
 	 * @access public
@@ -128,8 +128,8 @@ class Security extends \Skeleton\Core\Application\Event {
 	/**
 	 * replay_detected
 	 *
-	 * The replay_detected method allows you to catch replay detection events. 
-	 * By default, the user is redirected to the value of the HTTP referrer 
+	 * The replay_detected method allows you to catch replay detection events.
+	 * By default, the user is redirected to the value of the HTTP referrer
 	 * header if it is present
 	 *
 	 * @access public
@@ -145,8 +145,8 @@ class Security extends \Skeleton\Core\Application\Event {
 	/**
 	 * session_cookie
 	 *
-	 * The session_cookie method allows you to set session cookie parameters 
-	 * before the session is started. Typically, this would be used to SameSite 
+	 * The session_cookie method allows you to set session cookie parameters
+	 * before the session is started. Typically, this would be used to SameSite
 	 * cookie attribute.
 	 *
 	 * @access public
