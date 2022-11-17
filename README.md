@@ -88,6 +88,8 @@ There are various types of applications. Skeleton-core includes the most-used:
 
 Other applications are available via skeleton packages (eg
 [skeleton-application-api](https://github.com/tigron/skeleton-application-api)
+or [skeleton-application-dav](https://github.com/tigron/skeleton-application-dav)
+)
 
 A Skeleton Application\Web is a common application that handles any type of
 web interface. It has modules/templates/events and can contain its own
