@@ -17,7 +17,7 @@ class Application extends \Skeleton\Core\Application\Event {
 	 * @access public
 	 * @param \Skeleton\Core\Web\Module $module
 	 */
-	public function bootstrap(\Skeleton\Core\Application\Web\Module $module): void {
+	public function bootstrap(\Skeleton\Core\Application\Module $module): void {
 		// No default action
 	}
 
@@ -27,7 +27,7 @@ class Application extends \Skeleton\Core\Application\Event {
 	 * @access public
 	 * @param \Skeleton\Core\Web\Module $module
 	 */
-	public function teardown(\Skeleton\Core\Application\Web\Module $module): void {
+	public function teardown(\Skeleton\Core\Application\Module $module): void {
 		// No default action
 	}
 

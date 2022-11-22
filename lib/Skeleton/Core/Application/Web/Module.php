@@ -10,7 +10,7 @@ namespace Skeleton\Core\Application\Web;
 
 use Skeleton\Core\Application;
 
-abstract class Module {
+abstract class Module extends \Skeleton\Core\Application\Module {
 
 	/**
 	 * Login required

@@ -17,7 +17,7 @@ class Module extends \Skeleton\Core\Application\Event {
 	 * @access public
 	 * @param \Skeleton\Core\Application\Web\Module
 	 */
-	public function access_denied(\Skeleton\Core\Web\Module $module): void {
+	public function access_denied(\Skeleton\Core\Module $module): void {
 		throw new \Exception('Access denied');
 	}
 
