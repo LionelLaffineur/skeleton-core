@@ -17,7 +17,7 @@ class Module extends \Skeleton\Core\Application\Event {
 	 * @access public
 	 * @param \Skeleton\Core\Application\Web\Module
 	 */
-	public function access_denied(\Skeleton\Core\Module $module): void {
+	public function access_denied(\Skeleton\Core\Application\Module $module): void {
 		throw new \Exception('Access denied');
 	}
 
@@ -28,6 +28,6 @@ class Module extends \Skeleton\Core\Application\Event {
 	 */
 	public function not_found(): void {
 		\Skeleton\Core\Web\HTTP\Status::code_404('module');
-	}	
+	}
 
 }
