@@ -177,29 +177,52 @@ abstract class Application {
 	 * @param string $action
 	 * @return bool $exists
 	 */
-	public function load_event($context) {
-		if (isset($this->events[$context])) {
-			return $this->events[$context];
+	public function load_event($requested_context) {
+		if (isset($this->events[$requested_context])) {
+			return $this->events[$requested_context];
 		}
 
-		$classname = '\\App\\' . ucfirst($this->name) . '\\Event\\' . ucfirst($context);
-		$default = '\\Skeleton\\Core\\Application\\Event\\' . ucfirst($context);
+		$events = $this->get_events();
 
-		if (class_exists($classname)) {
-			if (!is_a($classname, $default, true)) {
-				throw new \Exception('Event ' . $classname . ' should extend from ' . $default);
+		foreach ($events as $context => $default) {
+			if (strtolower($context) != strtolower($requested_context)) {
+				continue;
+			}
+			$application_event = '\\App\\' . ucfirst($this->name) . '\\Event\\' . ucfirst($context);
+			if (class_exists($application_event)) {
+				if (!is_a($application_event, $default, true)) {
+					throw new \Exception('Event ' . $application_event . ' should extend from ' . $default);
+				}
+				$event = new $application_event($this);
+				$this->events[strtolower($context)] = $event;
+				return $this->events[strtolower($context)];
 			}
 
-			$event = new $classname($this);
-			$this->events[$context] = $event;
-			return $this->events[$context];
+			$event = new $default($this);
+			$this->events[strtolower($context)] = $event;
+			return $this->events[strtolower($context)];
 		}
 
-		$event = new $default($this);
-		$this->events[$context] = $event;
-		return $this->events[$context];
+		throw new \Exception('There is no event found for context ' . $requested_context);
 	}
 
+	/**
+	 * Get events
+	 *
+	 * Get a list of events for this application.
+	 * The returned array has the context as key, the value is the classname
+	 * of the default event
+	 *
+	 * @access protected
+	 * @return array $events
+	 */
+	protected function get_events(): array {
+		return [
+			'Application' => '\\Skeleton\\Core\\Application\\Event\\Application',
+			'Error' => '\\Skeleton\\Core\\Application\\Event\\Error',
+			'Media' => '\\Skeleton\\Core\\Application\\Event\\Media',
+		];
+	}
 
 	/**
 	 * Call event

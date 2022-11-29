@@ -9,7 +9,7 @@ It performs these main tasks:
   - Config management
   - Application detection
   - HTTP toolkit
-  
+
 ## Installation
 
 Installation via composer:
@@ -23,7 +23,7 @@ After installation you can start a skeleton project.
 ### Autoloading
 
 Skeleton doesn't enforce you to use a specific file structure. This means that
-skeleton can adapt itself to your structure. In order to do so, you need to 
+skeleton can adapt itself to your structure. In order to do so, you need to
 configure the skeleton autoloader.
 
 Autoloading can be configured like this:
@@ -70,7 +70,7 @@ Skeleton needs at least these config items to operate properly:
 
 
 ### Application detection
-	
+
 The package will automatically detect "applications", which are separate parts
 of your project. The following application types are available:
 
@@ -96,7 +96,7 @@ the following directory structure:
         - config
 		- event
 
-The application config directory should contain the application-specific 
+The application config directory should contain the application-specific
 configuration files. The following configuration directives should at least be
 set:
 |Configuration|Description|Default value|Example values|
@@ -160,8 +160,8 @@ when they are used, they should be located in the `event` directory of your
 application. The filename should be in the form of `Context_name.php`, for
 example `Application.php`.
 
-The class should extend from `Skeleton\Core\Application\Event\{Context}` and 
-the classname should be within the namespace `\App\APP_NAME\Event\{Context}`, 
+The class should extend from `Skeleton\Core\Application\Event\{Context}` and
+the classname should be within the namespace `\App\APP_NAME\Event\{Context}`,
 where `APP_NAME` is the name of your application, and `Context` is one of the
 available contexts:
 
@@ -201,16 +201,15 @@ The different contexts and their events are described below.
 
 ##### bootstrap
 
-The bootstrap method is called before loading the application module.
+The bootstrap method is called before loading the application.
 
-	public function bootstrap(\Skeleton\Core\Application\Web\Module $module): void
-
+	public function bootstrap(): void
 
 ##### teardown
 
 The teardown method is called after the application's run is over.
 
-	public function teardown(\Skeleton\Core\Application\Web\Module $module): void
+	public function teardown(): void
 
 ##### detect
 
@@ -228,8 +227,8 @@ This context is only available if skeleton-error is installed.
 
 ##### exception
 
-The exception method is called on every exeption/error. The method should 
-return a boolean, indicating if skeleton-error should proceed to other 
+The exception method is called on every exeption/error. The method should
+return a boolean, indicating if skeleton-error should proceed to other
 error handlers
 
 	public function exception(\Throwable $exception): bool
@@ -249,5 +248,4 @@ The `not_found` method is called whenever a media file is requested which could
 not be found.
 
 	public function not_found(): void
-
 

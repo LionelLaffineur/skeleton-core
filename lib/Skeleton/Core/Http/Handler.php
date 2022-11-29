@@ -75,6 +75,8 @@ class Handler {
 			HTTP\Status::code_404('application');
 		}
 		\Skeleton\Core\Application::set($application);
+		$application->call_event('application', 'bootstrap', []);
 		$application->run();
+		$application->call_event('application', 'teardown', []);
 	}
 }

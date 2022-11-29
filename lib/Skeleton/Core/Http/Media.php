@@ -398,7 +398,7 @@ class Media {
 
 		if ($_SERVER['HTTP_IF_MODIFIED_SINCE'] === gmdate('D, d M Y H:i:s', $this->get_mtime()).' GMT') {
 			header('Expires: ');
-			HTTP\Status::code_304();
+			Status::code_304();
 		}
 	}
 
