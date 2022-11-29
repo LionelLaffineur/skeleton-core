@@ -81,14 +81,18 @@ of your project. The following application types are available:
   - [skeleton-application-dav](https://github.com/tigron/skeleton-application-dav):
   A webdav interface
 
-Each application will listen on one or more hostnames. Skeleton-core will find
-the requested application and runs it. It is the responsibility of the
-application to finish the HTTP request.
+Based on the `Host`-header in the request, the correct application will be
+started. This is where the `hostnames` array in the application's configuration
+file (shown above) will come into play.
+
+If `skeleton-core` could find a matching application based on the `Host`-header.
+It is the responsibility of the application to finish the HTTP request.
+
 Applications are identified in the $application_path and should respect at least
 the following directory structure:
 
-    - $application_path 
-      - APP_NAME
+    - {application_path}
+      - {APP_NAME}
         - config
 		- event
 
