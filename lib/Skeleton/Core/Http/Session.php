@@ -26,8 +26,9 @@ class Session {
 	public static function start(&$properties = []) {
 		$application = \Skeleton\Core\Application::get();
 		$application->call_event('security', 'session_cookie');
-
-		session_name($application->config->session_name);
+		if (session_status() == PHP_SESSION_NONE) {
+			session_name($application->config->session_name);
+		}
 
 		if (isset($_COOKIE[$application->config->session_name])) {
 			$properties['resumed'] = true;
@@ -49,15 +50,11 @@ class Session {
 		if ($rewrite) {
 			$url = \Skeleton\Core\Util::rewrite_reverse($url);
 		}
-
-		// Fixme: teardown requires the current module, we don't have it here
-
-		/*
-			// Call teardown application event
-			$application = \Skeleton\Core\Application::get();
-			$application->call_event('application', 'teardown', []);
-		*/
-
+/*
+		// Call teardown application event
+		$application = \Skeleton\Core\Application::get();
+		$application->call_event('application', 'teardown', []);
+*/
 		// Redirect
 		header('Location: '.$url);
 		echo 'Redirecting to : '.$url;

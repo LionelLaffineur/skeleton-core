@@ -15,9 +15,11 @@ class Application extends \Skeleton\Core\Application\Event {
 	 * Bootstrap the application
 	 *
 	 * @access public
+	 * @return bool $proceed
 	 */
-	public function bootstrap(): void {
+	public function bootstrap(): bool {
 		// No default action
+		return true;
 	}
 
 	/**

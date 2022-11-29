@@ -163,6 +163,31 @@ abstract class Application {
 	}
 
 	/**
+	 * Accept the HTTP request
+	 *
+	 * @access public
+	 */
+	public function accept() {
+		/**
+		 * If this application is launched while another application has been
+		 * set, we need to take over the request_relative_uri
+		 * This happens when whitin an application, another application is
+		 * started.
+		 */
+		$application = self::get();
+		$this->request_relative_uri = $application->request_relative_uri;
+		$this->hostname = $application->hostname;
+
+		\Skeleton\Core\Application::set($this);	
+
+		$continue = $this->call_event('application', 'bootstrap', []);
+		if ($continue) {
+			$this->run();
+		}
+		$this->call_event('application', 'teardown', []);
+	}
+
+	/**
 	 * Run the application
 	 *
 	 * @access public

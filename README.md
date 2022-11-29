@@ -201,9 +201,12 @@ The different contexts and their events are described below.
 
 ##### bootstrap
 
-The bootstrap method is called before loading the application.
+The bootstrap method is called before loading the application. The event should
+return a boolean to indicate if skeleton should proceed running the application.
+If false is returned, the application stops execution and triggers the 
+teardown() event.
 
-	public function bootstrap(): void
+	public function bootstrap(): bool
 
 ##### teardown
 
