@@ -6,7 +6,7 @@
  * @author Christophe Gosiau <christophe@tigron.be>
  */
 
-namespace Skeleton\Core\Web;
+namespace Skeleton\Core\Http;
 
 class Session {
 
@@ -82,7 +82,7 @@ class Session {
 	 */
 	public static function set_sticky($key, $value) {
 		if (self::$sticky === null) {
-			self::$sticky = new \Skeleton\Core\Web\Session\Sticky();
+			self::$sticky = new \Skeleton\Core\Http\Session\Sticky();
 		}
 
 		self::$sticky->$key = $value;

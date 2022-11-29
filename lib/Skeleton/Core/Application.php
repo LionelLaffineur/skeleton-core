@@ -395,13 +395,6 @@ abstract class Application {
 	public static function get_all() {
 		$config = Config::get();
 
-		/**
-		 * @deprecated: this is for backwards compatibility
-		 */
-		if (isset($config->application_dir) and !isset($config->application_path)) {
-			$config->application_path = $config->application_dir;
-		}
-
 		if (!isset($config->application_path)) {
 			throw new \Exception('No application_path set. Please set "application_path" in project configuration');
 		}

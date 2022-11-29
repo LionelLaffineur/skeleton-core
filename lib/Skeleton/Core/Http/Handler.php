@@ -7,10 +7,9 @@
  * @author David Vandemaele <david@tigron.be>
  */
 
-namespace Skeleton\Core\Web;
+namespace Skeleton\Core\Http;
 
 use Skeleton\Core\Application;
-use Skeleton\Database\Database;
 
 class Handler {
 	/**
@@ -77,7 +76,5 @@ class Handler {
 		}
 		\Skeleton\Core\Application::set($application);
 		$application->run();
-
-
 	}
 }

@@ -7,7 +7,7 @@
  * @author David Vandemaele <david@tigron.be>
  */
 
-namespace Skeleton\Core\Web\Session;
+namespace Skeleton\Core\Http\Session;
 
 use Skeleton\Core\Config;
 

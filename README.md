@@ -97,7 +97,7 @@ set:
 |----|----|----|----|
 |application_type|(optional)Sets the application to the required type|\Skeleton\Application\Web||
 |hostnames|(required)an array containing the hostnames to listen for. Wildcards can be used via `*`.| []| [ 'www.example.be, '*.example.be' ]|
-|base_uri|Specifies the base uri for the application. If a base_uri is specified, it will be included in the reverse url generation|'/'|'/v1'|
+|asset_paths|An array containing optional paths to search for assets| [] | [ 'lib/external/assets' ] |
 |session_name|The name given to your session|'App'|any string|
 |sticky_session_name|The key in your session where sticky session information is stored|'sys_sticky_session'|any string|
 
@@ -110,81 +110,42 @@ available. It can:
   - accept an HTTP request and pass it to the correct application
   - serve media files
   - session management
-  - handle CSRF and Replay attack security
 
-#### CSRF
+#### HTTP handler
 
-The `skeleton-core` package can take care of automatically injecting and
-validating CSRF tokens for every `POST` request it receives. Various events have
-been defined, with which you can control the CSRF flow. A list of these events
-can be found further down.
+The HTTP handler will accept an incoming HTTP request and searches for the
+correct application based on the HTTP host header.
 
-CSRF is disabled globally by default. If you would like to enable it, simply
-flip the `csrf_enabled` flag to true, via configuration directive `csrf_enabled`
+To run the HTTP handler:
 
-Once enabled, it is enabled for all your applications. If you want to disable it
-for specific applications only, flip the `csrf_enabled` flag to `false` in the
-application's configuration.
+    \Skeleton\Core\Http\Handler::Run();
 
-Several events are available to control the CSRF behaviour, these have been
-documented below.
+It will then pass the request over to the application. The application will
+be set via:
 
-When enabled, hidden form elements with the correct token as a value will
-automatically be injected into every `<form>...</form>` block found. This allows
-for it to work without needing to change your code.
+    \Skeleton\Core\Application::set();
 
-If you need access to the token value and names, you can access them from the
-`env` variable which is automatically assigned to your template. The available
-variables are listed below:
+In the lifespan of the request, the application can always be retrieved via:
 
-- env.csrf_header_token_name
-- env.csrf_post_token_name
-- env.csrf_session_token_name
-- env.csrf_token
+    \Skeleton\Core\Application::get();
 
-One caveat are `XMLHttpRequest` calls (or `AJAX`). If your application is using
-`jQuery`, you can use the example below to automatically inject a header for
-every relevant `XMLHttpRequest`.
+#### Serve media
 
-First, make the token value and names available to your view. A good place to do
-so, might be the document's `<head>...</head>` block.
+Media serving is only done for known filetypes. The known filetypes are:
+css, map, pdf, txt, woff, woff2, ttf, otf, eot, gif, jpg, jpeg, png, ico, svg,
+js, html, htm, mp4, mkv
+Any other file extensions will be ignored.
+Media serving can be requested via:
 
-    <!-- CSRF token values -->
-    <meta name="csrf-header-token-name" content="{{ env.csrf_header_token_name }}">
-    <meta name="csrf-token" content="{{ env.csrf_token }}">
+    \Skeleton\Core\Http\Media::detect($request_uri);
 
-Next, we can make use of `jQuery`'s `$.ajaxSend()`. This allows you to
-configure settings which will be applied for every subsequent `$.ajax()` call
-(or derivatives thereof, such as `$.post()`).
+The asset will be searched for in the following order:
 
-    $(document).ajaxSend(function(e, xhr, settings) {
-        if (!(/^(GET|HEAD|OPTIONS|TRACE)$/.test(settings.type)) && !this.crossDomain) {
-		    xhr.setRequestHeader($('meta[name="csrf-header-token-name"]').attr('content'), $('meta[name="csrf-token"]').attr('content'));
-		}
-    });
+    1. The media directory of the current Application
+    2. The configured asset_paths
+    3. The media directory of other skeleton packages
 
-Notice the check for the request type and cross domain requests. This avoids
-sending your token along with requests which don't need it.
 
-#### Replay
-
-The built-in replay detection tries to work around duplicate form submissions by
-users double-clicking the submit button. Often, this is not caught in the UI.
-
-Replay detection is disabled by default, if you would like to enable it, flip
-the `replay_enabled` configuration directive to true.
-
-You can disable replay detection for individual applications by setting the
-`replay_enabled` flag to `false` in their respective configuration.
-
-When the replay detection is enabled, it will inject a hidden `__replay-token`
-element into every `form` element it can find. Each token will be unique. Once
-submited, the token is added to a list of tokens seen before. If the same token
-appears again within 30 seconds, the replay detection will be triggered.
-
-If your application has defined a `replay_detected` event, this will be called.
-It is up to the application to decide what action to take. One suggestion is to
-redirect the user to the value HTTP referrer, if present.
 
 ### Events
 
@@ -196,15 +157,19 @@ when they are used, they should be located in the `event` directory of your
 application. The filename should be in the form of `Context_name.php`, for
 example `Application.php`.
 
-The class should extend from `Skeleton\Core\Application\Event\{Context}` and the classname should be
-within the namespace `\App\APP_NAME\Event\{Context}`, where
-`APP_NAME` is the name of your application, and `Context` is one of the
+The class should extend from `Skeleton\Core\Application\Event\{Context}` and 
+the classname should be within the namespace `\App\APP_NAME\Event\{Context}`, 
+where `APP_NAME` is the name of your application, and `Context` is one of the
 available contexts:
 
 - Application
 - Error
-- I18n
 - Media
+
+Depending on the type of Application you are running, additional events could
+be available. Please read the application-type Readme for more information.
+
+- I18n
 - Module
 - Security
 
@@ -276,35 +241,6 @@ to Sentry with application-specific data (ex the user that logged in)
 
 	public function sentry_before_send(\Sentry\Event $event)
 
-#### I18n context
-
-##### get_translator_extractor
-
-Get a Translator\Extractor for this application. If not provided, a 
-Translator\Extractor\Twig is created for the template-directory of the 
-application.
-
-	public function get_translator_extractor(): \Skeleton\I18n\Translator\Extractor
-
-Get a Translator\Storage for this application. If not provided, a 
-Translator\Storage\Po is created, but only if a default storage path is 
-configured.
-
-	public function get_translator_storage(): \Skeleton\I18n\Translator\Storage
-
-Get a Translator object for this application. If no translation is needed, 
-return null. By default, a translator is created with the storage and 
-extractor of the above methods.
-
-	public function get_translator(): ?\Skeleton\I18n\Translator
-	
-Detect the language for the application. By default, a language is negotiated
-between $_SERVER['HTTP_ACCEPT_LANGUAGE'] and all available languages.
-If a language is returned, it will be stored in the session so this will only
-be triggered the first request.	
-	
-	public function detect_language(): \Skeleton\I18n\LanguageInterface	
-
 #### Media context
 
 ##### not_found
@@ -314,116 +250,5 @@ not be found.
 
 	public function not_found(): void
 
-#### Module context
 
-##### access_denied
-
-The `access_denied` method is called whenever a module is requested which can
-not be accessed by the user. The optional `secure()` method in the module
-indicates whether the user is granted access or not.
-
-	public function access_denied(\Skeleton\Core\Web\Module $module): void
-
-##### not_found
-
-The `not_found` method is called whenever a module is requested which does not
-exist.
-
-	public function not_found(): void
-
-#### Security context
-
-##### csrf_validate_enabled
-
-The `csrf_validate_enabled` method overrides the complete execution of the
-validation, which useful to exclude specific paths. An example implementation
-can be found below.
-
-    public function csrf_validate_enabled(): bool {
-        $excluded_paths = [
-            '/no/csrf/*',
-        ];
-
-        foreach ($excluded_paths as $excluded_path) {
-            if (fnmatch ($excluded_path, $_SERVER['REQUEST_URI']) === true) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-##### csrf_validate_success
-
-The `csrf_validate_success` method allows you to override the check result after
-a successful validation. It expects a boolean as a return value.
-
-	public function csrf_validate_success(): bool
-
-
-##### csrf_validation_failed
-
-The `csrf_validation_failed` method allows you to override the check result
-after a failed validation. It expects a boolean as a return value.
-
-	public function csrf_validation_failed(): bool {
-
-
-##### csrf_generate_session_token
-
-The `csrf_generate_session_token` method allows you to override the generation
-of the session token, and generate a custom value instead. It expects a string
-as a return value.
-
-	public function csrf_generate_session_token(): string
-
-
-##### csrf_inject
-
-The `csrf_inject` method allows you to override the automatic injection of the
-hidden CSRF token elements in the HTML forms of the rendered template. It
-expects a string as a return value, containing the rendered HTML to be sent back
-to the client.
-
-	public function csrf_inject($html, $post_token_name, $post_token): string
-
-
-##### csrf_validate
-
-The `csrf_validate` method allows you to override the validation process of the
-CSRF token. It expects a boolean as a return value.
-
-	public function csrf_validate($submitted_token, $session_token): bool
-
-
-##### replay_detected
-
-The `replay_detected` method allows you to catch replay detection events. For
-example, you could redirect the user to the value of the HTTP referrer header
-if it is present:
-
-    public function replay_detected() {
-        if (!empty($_SERVER['HTTP_REFERER'])) {
-            Session::redirect($_SERVER['HTTP_REFERER'], false);
-        } else {
-            Session::redirect('/');
-        }
-    }
-
-##### replay_inject
-
-The `replay_inject` method allows you to override the automatic injection of the
-hidden replay token elements in the HTML forms of the rendered template. It
-expects a string as a return value, containing the rendered HTML to be sent back
-to the client.
-
-	public function csrf_inject($html, $post_token_name, $post_token): string
-
-##### session_cookie
-
-The `session_cookie` method allows you to set session cookie parameters before
-the session is started. Typically, this would be used to SameSite cookie
-attribute.
-
-	public function session_cookie(): void
 

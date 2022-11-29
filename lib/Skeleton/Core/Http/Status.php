@@ -5,7 +5,7 @@
  * @author Gerry Demaret <gerry@tigron.be>
  */
 
-namespace Skeleton\Core\Web\HTTP;
+namespace Skeleton\Core\Http;
 
 class Status {
 

@@ -80,7 +80,7 @@ class Autoloader {
 	 */
 	public function add_namespace($namespace, $path) {
 		$this->namespaces[$namespace] = $path;
-	}	
+	}
 
 	/**
 	 * Gets the loaded include paths.
@@ -136,7 +136,7 @@ class Autoloader {
 			if (strpos('\\' . strtolower($class_name), strtolower($namespace)) !== 0) {
 				continue;
 			}
-			
+
 			$file_path = str_replace(' ', DIRECTORY_SEPARATOR, ucwords(str_replace('\\', ' ', str_replace(strtolower($namespace), '', '\\' . strtolower($class_name))))) . '.php';
 			$file_path = $namespace_path . DIRECTORY_SEPARATOR . $file_path;
 

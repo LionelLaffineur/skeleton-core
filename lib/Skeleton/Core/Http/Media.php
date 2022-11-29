@@ -7,7 +7,7 @@
  * @author David Vandemaele <david@tigron.be>
  */
 
-namespace Skeleton\Core\Web;
+namespace Skeleton\Core\Http;
 
 use Skeleton\Core\Application;
 
@@ -136,13 +136,6 @@ class Media {
 
 			// Add the global asset paths
 			$config = \Skeleton\Core\Config::get();
-
-			/**
-			 * @deprecated: this is for backwards compatibility
-			 */
-			if (isset($config->asset_dir) and !isset($config->asset_paths)) {
-				$config->asset_paths = $config->asset_dir;
-			}
 
 			if (isset($config->asset_paths)) {
 				if (!is_array($config->asset_paths)) {
