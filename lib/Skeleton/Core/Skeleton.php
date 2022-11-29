@@ -61,13 +61,18 @@ class Skeleton {
 			/**
 			 * Search for other Skeleton packages installed
 			 */
-			$installed = \Composer\InstalledVersions::getInstalledPackages();
+			$composer_path = realpath(__DIR__ . '/../../../../../');
+			$installed = file_get_contents($composer_path . '/composer/installed.json');
+			$installed = json_decode($installed);
+
+			// The structure of the installed.json file in composer 2 is slightly different
+			if (isset($installed->packages)) {
+				$installed = $installed->packages;
+			}
 
 			$skeletons = [];
-			foreach ($installed as $package) {
-				if (strpos('/', $package) === false) {
-					continue;
-				}
+			foreach ($installed as $install) {
+				$package = $install->name;
 				list($vendor, $name) = explode('/', $package);
 				if ($vendor != 'tigron') {
 					continue;
