@@ -2,29 +2,14 @@
 
 ## Description
 
-This library contains the core functionality of `skeleton`. It handles the
-bootstrapping and, when used in a web context, it will receive and handle the
-HTTP request.
+This library contains the core functionality of the `skeleton` framework.
+It performs these main tasks:
 
-The package will automatically detect "applications", which are separate parts
-of your project. Each application can implement its own user interface.
-Applications are detected based on the URL requested by the user. Usually based
-on the hostname, `skeleton-core` will search for the matching application.
-
-For example, one could create one application for a public website while a
-second application can handle the administrative interface. The public
-application would for example listen on `www.example.com`, while the
-administrative interface would listen for requests to `admin.example.com`.
-
-The request will then be finalized by the matching module in the application. By
-default, the module is matched by mapping the URI on the local filesystem path,
-but this behaviour can be altered using `routes`.
-
-One special case, is handling of so-called `media` files. When a media file is
-requested, detection of which happens based on the requested file's extension,
-it will be served from the `media/image`, `media/javascript` or `media/css` in
-the matching application directory.
-
+  - Autoloading
+  - Config management
+  - Application detection
+  - HTTP toolkit
+  
 ## Installation
 
 Installation via composer:
@@ -33,7 +18,31 @@ Installation via composer:
 
 After installation you can start a skeleton project.
 
-## Getting ready
+## Features
+
+### Autoloading
+
+Skeleton doesn't enforce you to use a specific file structure. This means that
+skeleton can adapt itself to your structure. In order to do so, you need to 
+configure the skeleton autoloader.
+
+Autoloading can be configured like this:
+
+		/**
+		 * Register the autoloader
+		 */
+		$autoloader = new \Skeleton\Core\Autoloader();
+		$autoloader->add_include_path($root_path . '/lib/model/');
+		$autoloader->add_include_path($root_path . '/lib/base/');
+		$autoloader->add_include_path($root_path . '/lib/component/');
+		$autoloader->add_include_path($root_path . '/tests');
+		$autoloader->register();
+
+Skeleton autoloader will include the given include paths in its search for the
+requested class. An optional parameter 'class_prefix' can be given. This will
+prepend all classes for a given path with the given prefix:
+
+### Config management
 
 Skeleton core offers a Config object that is populated from a given config
 directory. The Config object automatically includes all php files which are
@@ -57,190 +66,53 @@ Skeleton needs at least these config items to operate properly:
 	'application_path': The root path where skeleton can find Skeleton
 	Applications
 
-Your webserver should rewrite every request to a single PHP file. This file
-will start your skeleton project. It should include at least the following
 
-    \Skeleton\Core\Config::include_path('config');
-    \Skeleton\Core\Web\Handler::Run();
+### Application detection
+	
+The package will automatically detect "applications", which are separate parts
+of your project. The following application types are available:
 
-Altough a skeleton project can have any desired directory structure, we
-encourage to use the following:
+  - [skeleton-application-web](https://github.com/tigron/skeleton-application-web):
+  A web application.
+  - [skeleton-application-api](https://github.com/tigron/skeleton-application-api):
+  An Openapi interface
+  - [skeleton-application-dav](https://github.com/tigron/skeleton-application-dav):
+  A webdav interface
 
-    - app
-    - config
-    - lib
-      - model
-      - external
-        - package
-        - asset
+Each application will listen on one or more hostnames. Skeleton-core will find
+the requested application and runs it. It is the responsibility of the
+application to finish the HTTP request.
+Applications are identified in the $application_path and should respect at least
+the following directory structure:
 
-If more skeleton packages are installed, this structure can easily be extended
-to support additional features (file storage/translations/migrations/...)
-
-## Applications
-
-The application dir will automatically be scanned for Skeleton Applications.
-Each subdirectory will be seen as a fully independent \Skeleton\Core\Application
-
-There are various types of applications. Skeleton-core includes the most-used:
-
-	\Skeleton\Core\Application\Web
-
-Other applications are available via skeleton packages (eg
-[skeleton-application-api](https://github.com/tigron/skeleton-application-api)
-or [skeleton-application-dav](https://github.com/tigron/skeleton-application-dav)
-)
-
-A Skeleton Application\Web is a common application that handles any type of
-web interface. It has modules/templates/events and can contain its own
-media.
-For an Application\Web to work properly, it is important to respect the correct
-directory structure within the application:
-
-    - app
-      - your application's folder
+    - $application_path 
+      - APP_NAME
         - config
-          - application_config1.php
-          - application_config2.php
-        - event
-        - module
-        - template
-        - media
-          - css
-          - javascript
-          - image
+		- event
 
-If you want media files to be served from additional paths, for example
-if you have a package manager such as `bower`, `yarn` or even the
-`fxp/composer-asset-plugin`, you can specify additional paths which will
-be searched in addition to the default `media` one.
-
-To enable media serving from an additional asset path, include the
-following configuration directive in your skeleton project:
-
-	'asset_paths': The asset paths where media files can be served from if
-	they are not found in your application.
-
-
-### Application configuration
-
-Applications can have their own configuration. The application's configuration
-is done via configuration files placed in the `config` directory of your app.
-Similar as the global project configuration, every PHP file will be evaluated
-in alphabetical order and should return an array with configuration directives.
-If you have environment-specific configurations, they can be included in
-`environment.php` which will be evaluated last.
-
-The following optional configurations can be set:
-
+The application config directory should contain the application-specific 
+configuration files. The following configuration directives should at least be
+set:
 |Configuration|Description|Default value|Example values|
 |----|----|----|----|
+|application_type|(optional)Sets the application to the required type|\Skeleton\Application\Web||
 |hostnames|(required)an array containing the hostnames to listen for. Wildcards can be used via `*`.| []| [ 'www.example.be, '*.example.be' ]|
 |base_uri|Specifies the base uri for the application. If a base_uri is specified, it will be included in the reverse url generation|'/'|'/v1'|
-|default_language|This is the ISO 639-1 code for the default language to be used, if no more specific one can be found|'en'|'en', 'nl', any language iso2 code provided by skeleton-i18n|
 |session_name|The name given to your session|'App'|any string|
 |sticky_session_name|The key in your session where sticky session information is stored|'sys_sticky_session'|any string|
-|csrf_enabled|Enable CSRF|false|true/false|
-|replay_enabled|Prevent replay attack|false|true/false|
-|hostnames|Array with hostnames that should be handled by the application|[]|array with any hostname(s)|
-|routes|Array with route information|[]| See routes |
-|module_default|The default module to search for|'index'||
-|module_404|The 404 module on fallback when no module is found|'404'||
-|sticky_pager|Enable sticky pager|false|Only available if [skeleton-pager](https://github.com/tigron/skeleton-pager) is installed|
-|route_resolver|Closure to provide module resolving based on requested path|Internal module resolver||
-
-### Application namespaces
-
-All PHP classes in your Skeleton application should be whitin your Application
-Namespace, which is:
-
-	\App\APP_NAME\
-
-For modules, the specific namespace is
-
-	\App\APP_NAME\Module
-
-For events, the specific namespace is
-
-	\App\APP_NAME\Event
 
 
-### routes
+### HTTP toolkit
 
-An array which maps `routes` to `modules`. A route definition cab be used to
-generate pretty URL's, or even translated versions. Usage is best described by
-an example.
+Altough skeleton can be used for a console application, it has an HTTP toolkit
+available. It can:
 
-    [
-        'web_module_index' => [
-            '$language/default/route/to/index',
-            '$language/default/route/to/index/$action',
-            '$language/default/route/to/index/$action/$id',
-            '$language[en]/test/routing/engine',
-            '$language[en]/test/routing/engine/$action',
-            '$language[en]/test/routing/engine/$action/$id',
-            ],
-    ],
+  - accept an HTTP request and pass it to the correct application
+  - serve media files
+  - session management
+  - handle CSRF and Replay attack security
 
-### Usage
-
-#### Routing to the correct application
-
-Based on the `Host`-header in the request, the correct application will be
-started. This is where the `hostnames` array in the application's configuration
-file (shown above) will come into play.
-
-If `skeleton-core` could find a matching application based on the `Host`-header
-supplied in the request, this is the application that will be started.
-
-If your application has `base_uri` configured, that will be taken into account
-as well. For example: the application for a CMS can be distinguished by setting
-its `base_uri` to `/admin`.
-
-#### Routing to the correct module
-
-Requests that do not have a file extension and thus do not match a `media` file,
-will be routed to a module and a matching method. The module is determined based
-on the request URI, excluding all $_GET parameters. The module is a class that
-should be derived from `\Skeleton\Core\Application\Web\Module`.
-
-This can be best explained with some examples:
-
-| requested uri    | classname                  | filename             |
-| ---------------- | -------------------------- | -------------------- |
-| /user/management | \App\APP_NAME\Module\User\Management | /user/management.php |
-| /                | \App\APP_NAME\Module\Index           | /index.php           |
-| /user            | \App\APP_NAME\Module\User            | /user.php            |
-| /user            | \App\APP_NAME\Module\User\Index      | /user/index.php      |
-
-As you can see in the last two examples, the `index` modules are a bit special,
-in that they can be used instead of the underlying one if they sit in a
-subfolder. The `index` is configurable via configuration directive
-`module_default`
-
-### Routing to the correct method
-
-A module can contain multiple methods that can handle the request. Each of
-those requests have a method-name starting with 'display'. The method is defined
-based on the $_GET['action'] variable.
-
-Some examples:
-
-| requested uri    | classname           | method               |
-| -------------    | ---------           | --------             |
-| /user            | \App\APP_NAME\Module\User     | display()            |
-| /user?action=test| \App\APP_NAME\Module\User     | display_test()       |
-
-### Handling of media files
-
-If the requested url contains an extension which matches a known media type, the
-requested file will be served from the `media/` directory of the application.
-
-If the requested media file could not be found, `skeleton-core` will search for
-a matching file in the folder specified by configuration directive `asset_dir`
-(if any).
-
-### CSRF
+#### CSRF
 
 The `skeleton-core` package can take care of automatically injecting and
 validating CSRF tokens for every `POST` request it receives. Various events have
@@ -294,7 +166,7 @@ configure settings which will be applied for every subsequent `$.ajax()` call
 Notice the check for the request type and cross domain requests. This avoids
 sending your token along with requests which don't need it.
 
-### Replay
+#### Replay
 
 The built-in replay detection tries to work around duplicate form submissions by
 users double-clicking the submit button. Often, this is not caught in the UI.

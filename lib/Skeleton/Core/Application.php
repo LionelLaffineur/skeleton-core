@@ -258,7 +258,7 @@ abstract class Application {
 		}
 
 		return call_user_func_array($this->get_event_callable($context, $action), $arguments);
-	}	
+	}
 
 	/**
 	 * Get
@@ -426,9 +426,31 @@ abstract class Application {
 	 * @return Application $application
 	 */
 	public static function get_by_name($name) {
-		$application = new Application\Web($name);
-		$config = $application->config;
-		$application_type = $config->application_type;
+		$application_type = self::get_application_type($name);
 		return new $application_type($name);
 	}
+
+	/**
+	 * Get application_type
+	 *
+	 * @access public
+	 * @return string $classname
+	 * @param string $application_name
+	 */
+	public static function get_application_type($application_name): string {
+		$config = clone Config::get();
+		$application_path = realpath($config->application_path . '/' . $application_name);
+
+		if (!file_exists($application_path . '/config')) {
+			throw new \Exception('No config directory created in app ' . $this->path);
+		}
+
+		/**
+		 * Set some defaults
+		 */
+		$config->application_type = '\Skeleton\Application\Web';
+		$config->read_path($application_path . '/config');
+		return $config->application_type;
+	}
+
 }

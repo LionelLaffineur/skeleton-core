@@ -61,18 +61,15 @@ class Skeleton {
 			/**
 			 * Search for other Skeleton packages installed
 			 */
-			$composer_path = realpath(__DIR__ . '/../../../../../');
-			$installed = file_get_contents($composer_path . '/composer/installed.json');
-			$installed = json_decode($installed);
-
-			// The structure of the installed.json file in composer 2 is slightly different
-			if (isset($installed->packages)) {
-				$installed = $installed->packages;
-			}
+			$installed = \Composer\InstalledVersions::getAllRawData();
+			$installed = array_shift($installed);
 
 			$skeletons = [];
-			foreach ($installed as $install) {
-				$package = $install->name;
+			foreach ($installed['versions'] as $package => $details) {
+				if (strpos($package, '/') === false) {
+					continue;
+				}
+
 				list($vendor, $name) = explode('/', $package);
 				if ($vendor != 'tigron') {
 					continue;
@@ -80,10 +77,10 @@ class Skeleton {
 
 				$skeleton = new self();
 				$skeleton->name = $name;
-				$skeleton->path = $composer_path . '/tigron/' . $name;
-				$skeleton->template_path = $composer_path . '/tigron/' . $name . '/template';
-				$skeleton->asset_path = $composer_path . '/tigron/' . $name . '/media';
-				$skeleton->migration_path = $composer_path . '/tigron/' . $name . '/migration';
+				$skeleton->path = $details['install_path'];
+				$skeleton->template_path = $skeleton->path . '/template';
+				$skeleton->asset_path = $skeleton->path . '/media';
+				$skeleton->migration_path = $skeleton->path . '/migration';
 
 				$skeletons[] = $skeleton;
 			}
