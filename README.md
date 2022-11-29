@@ -141,11 +141,9 @@ Media serving can be requested via:
 
 The asset will be searched for in the following order:
 
-    1. The media directory of the current Application
-    2. The configured asset_paths
-    3. The media directory of other skeleton packages
-
-
+1. The media directory of the current Application
+2. The configured asset_paths
+3. The media directory of other skeleton packages
 
 ### Events
 
@@ -169,9 +167,6 @@ available contexts:
 Depending on the type of Application you are running, additional events could
 be available. Please read the application-type Readme for more information.
 
-- I18n
-- Module
-- Security
 
 Example of a `Module` event class for an application named `admin`:
 
