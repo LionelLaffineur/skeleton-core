@@ -63,8 +63,10 @@ Get a config object
 
 Skeleton needs at least these config items to operate properly:
 
-	'application_path': The root path where skeleton can find Skeleton
-	Applications
+|Configuration|Description|Default value|Example values|
+|----|----|----|----|
+|application_path|Sets the directory where skeleton-core can find Applications||'app/'|
+|asset_paths|An array containing optional paths to search for assets| [] | [ 'lib/external/assets' ] |
 
 
 ### Application detection
@@ -97,7 +99,6 @@ set:
 |----|----|----|----|
 |application_type|(optional)Sets the application to the required type|\Skeleton\Application\Web||
 |hostnames|(required)an array containing the hostnames to listen for. Wildcards can be used via `*`.| []| [ 'www.example.be, '*.example.be' ]|
-|asset_paths|An array containing optional paths to search for assets| [] | [ 'lib/external/assets' ] |
 |session_name|The name given to your session|'App'|any string|
 |sticky_session_name|The key in your session where sticky session information is stored|'sys_sticky_session'|any string|
 
@@ -244,6 +245,5 @@ The `not_found` method is called whenever a media file is requested which could
 not be found.
 
 	public function not_found(): void
-
 
 
