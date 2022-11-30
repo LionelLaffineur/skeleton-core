@@ -43,13 +43,14 @@ class Core_App_List extends \Skeleton\Console\Command {
 		$applications = \Skeleton\Core\Application::get_all();
 
 		$table = new Table($output);
-		$table->setHeaders(['Name', 'Hostnames']);
+		$table->setHeaders(['Name', 'Hostnames', 'Type']);
 
 		$rows = [];
 		foreach ($applications as $application) {
 			$rows[] = [
 				$application->name,
 				implode(', ', $application->config->hostnames),
+				$application->config->application_type
 			];
 		}
 		$table->setRows($rows);
