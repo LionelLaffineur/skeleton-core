@@ -72,7 +72,7 @@ class Handler {
 		try {
 			$application = Application::detect($hostname, $request_uri);
 		} catch (\Skeleton\Core\Exception_Unknown_Application $e) {
-			HTTP\Status::code_404('application');
+			Status::code_404('application');
 		}
 		$application->accept();
 	}
