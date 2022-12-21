@@ -483,7 +483,7 @@ abstract class Application {
 		$application_path = realpath($config->application_path . '/' . $application_name);
 
 		if (!file_exists($application_path . '/config')) {
-			throw new \Exception('No config directory created in app ' . $this->path);
+			throw new \Exception('No config directory created in app ' . $application_name);
 		}
 
 		/**
