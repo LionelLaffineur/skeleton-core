@@ -77,7 +77,7 @@ class Skeleton {
 
 				$skeleton = new self();
 				$skeleton->name = $name;
-				$skeleton->path = $details['install_path'];
+				$skeleton->path = realpath($details['install_path']);
 				$skeleton->template_path = $skeleton->path . '/template';
 				$skeleton->asset_path = $skeleton->path . '/media';
 				$skeleton->migration_path = $skeleton->path . '/migration';
