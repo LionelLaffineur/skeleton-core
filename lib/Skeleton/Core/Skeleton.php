@@ -71,7 +71,8 @@ class Skeleton {
 				}
 
 				list($vendor, $name) = explode('/', $package);
-				if ($vendor != 'tigron') {
+
+				if ($vendor !== 'tigron' || $details['type'] !== 'library') {
 					continue;
 				}
 
@@ -84,9 +85,10 @@ class Skeleton {
 
 				$skeletons[] = $skeleton;
 			}
+
 			self::$skeleton_cache = $skeletons;
 		}
+
 		return self::$skeleton_cache;
 	}
-
 }
