@@ -43,6 +43,14 @@ class Skeleton {
 	public $asset_path = null;
 
 	/**
+	 * Migration path
+	 *
+	 * @access public
+	 * @var string $migration_path
+	 */
+	public $migration_path = null;
+
+	/**
 	 * Package cache
 	 *
 	 * @access private
