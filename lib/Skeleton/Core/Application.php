@@ -447,7 +447,7 @@ abstract class Application {
 			throw new \Exception('No application_path set. Please set "application_path" in project configuration');
 		}
 		$application_paths = scandir($config->application_path);
-		$application = [];
+		$applications = [];
 		foreach ($application_paths as $application_path) {
 			if ($application_path[0] == '.') {
 				continue;
