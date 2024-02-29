@@ -178,7 +178,7 @@ abstract class Application {
 		$this->request_relative_uri = $application->request_relative_uri;
 		$this->hostname = $application->hostname;
 
-		\Skeleton\Core\Application::set($this);	
+		\Skeleton\Core\Application::set($this);
 
 		$continue = $this->call_event('application', 'bootstrap', []);
 		if ($continue) {
@@ -406,16 +406,26 @@ abstract class Application {
 		// request specifically. Otherwise, simply return the first one.
 		$matched_applications_sorted = [];
 		foreach ($matched_applications as $application) {
+			/**
+			 * Matched hostname can be null
+			 * NULL cannot be used in strlen, replace it with empty string
+			 */
+			$matched_hostname = $application->matched_hostname;
+			if ($matched_hostname === null) {
+				$matched_hostname = '';
+			}
+
 			if (isset($application->config->base_uri)) {
 				// base_uri should not be empty, default to '/'
 				if ($application->config->base_uri == '') {
 					$application->config->base_uri = '/';
 				}
+
 				if (strpos($request_uri, $application->config->base_uri) === 0) {
-					$matched_applications_sorted[strlen($application->matched_hostname)][strlen($application->config->base_uri)] = $application;
+					$matched_applications_sorted[strlen($matched_hostname)][strlen($application->config->base_uri)] = $application;
 				}
 			} else {
-				$matched_applications_sorted[strlen($application->matched_hostname)][0] = $application;
+				$matched_applications_sorted[strlen($matched_hostname)][0] = $application;
 			}
 		}
 
