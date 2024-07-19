@@ -157,7 +157,14 @@ class Web extends \Skeleton\Core\Application {
 		$csrf = \Skeleton\Core\Web\Security\Csrf::get();
 
 		if ($session_properties['resumed'] === true && !$csrf->validate()) {
-			$this->call_event('security', 'csrf_validation_failed');
+			if ($this->event_exists('security', 'csrf_validate_failed')) {
+				$this->call_event_if_exists('security', 'csrf_validate_failed');
+			} elseif ($this->event_exists('security', 'csrf_validation_failed')) {
+				// This should be deprecated, documentation inconsistency
+				$this->call_event_if_exists('security', 'csrf_validation_failed');
+			} else {
+				\Skeleton\Core\Web\HTTP\Status::code_403('CSRF validation failed');
+			}
 		}
 
 		/**
