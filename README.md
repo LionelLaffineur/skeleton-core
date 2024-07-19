@@ -443,9 +443,9 @@ can be found below.
 The `csrf_validate_success` method allows you to override the check result after
 a successful validation. It expects a boolean as a return value.
 
-##### csrf_validation_failed
+##### csrf_validate_failed
 
-The `csrf_validation_failed` method allows you to override the check result
+The `csrf_validate_failed` method allows you to override the check result
 after a failed validation. It expects a boolean as a return value.
 
 ##### csrf_generate_session_token
