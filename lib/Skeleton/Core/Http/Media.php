@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * Media detection and serving of media files
  *
@@ -12,38 +15,34 @@ namespace Skeleton\Core\Http;
 use Skeleton\Core\Application;
 
 class Media {
-
 	/**
 	 * Request uri
 	 *
 	 * @access private
-	 * @var string $request_uri
 	 */
-	protected $request_uri = null;
+	protected ?string $request_uri = null;
 
 	/**
 	 * Path
 	 *
 	 * @access private
-	 * @var string $path
 	 */
-	protected $path = null;
+	protected ?string $path = null;
 
 	/**
 	 * Mtime
 	 *
 	 * @access private
-	 * @var int $mtime
 	 */
-	protected $mtime = null;
+	protected ?int $mtime = null;
 
 	/**
 	 * Image extensions
 	 *
-	 * @var array $filetypes
+	 * @var array<array<string>> $filetypes
 	 * @access protected
 	 */
-	protected static $filetypes = [
+	protected static array $filetypes = [
 		'css' => [
 			'css',
 			'map',
@@ -57,7 +56,7 @@ class Media {
 			'woff2',
 			'ttf',
 			'otf',
-			'eot'
+			'eot',
 		],
 		'image' => [
 			'gif',
@@ -77,16 +76,15 @@ class Media {
 		'video' => [
 			'mp4',
 			'mkv',
-		]
+		],
 	];
 
 	/**
 	 * Constructor
 	 *
 	 * @access public
-	 * @param string $request_uri
 	 */
-	public function __construct($request_uri) {
+	public function __construct(string $request_uri) {
 		$this->request_uri = $request_uri;
 	}
 
@@ -96,14 +94,13 @@ class Media {
 	 * @access public
 	 * @return known extension
 	 */
-	public function has_known_extension() {
+	public function has_known_extension(): bool {
 		$pathinfo = pathinfo($this->request_uri);
 		if (!isset($pathinfo['extension'])) {
 			return false;
 		}
 
-		$known_extension = false;
-		foreach (self::$filetypes as $filetype => $extensions) {
+		foreach (self::$filetypes as $extensions) {
 			if (in_array(strtolower($pathinfo['extension']), $extensions)) {
 				return true;
 			}
@@ -113,11 +110,52 @@ class Media {
 	}
 
 	/**
+	 * Serve the media
+	 *
+	 * @access public
+	 */
+	public function serve(): void {
+		// Send the Etag before potentially replying with 304
+		header('Etag: ' . crc32((string)$this->get_mtime()) . '-' . sha1($this->get_path()));
+		$this->http_if_modified();
+		$this->serve_cache();
+		$this->serve_content();
+		exit;
+	}
+
+	/**
+	 * Detect if the request is a request for media
+	 *
+	 * @access public
+	 */
+	public static function detect(string $request_uri): bool {
+		// Don't bother looking up /
+		if ($request_uri === '/') {
+			return false;
+		}
+
+		$request = pathinfo($request_uri);
+
+		if (!isset($request['extension'])) {
+			return false;
+		}
+
+		$classname = get_called_class();
+		$media = new $classname($request_uri);
+		if (!$media->has_known_extension()) {
+			return false;
+		}
+
+		$media->serve();
+		return true;
+	}
+
+	/**
 	 * Get path
 	 *
 	 * @access private
 	 */
-	protected function get_path() {
+	protected function get_path(): string {
 		if ($this->path === null) {
 			$pathinfo = pathinfo($this->request_uri);
 			$filepaths = [];
@@ -154,7 +192,7 @@ class Media {
 
 			foreach ($packages as $package) {
 				$path_parts = array_values(array_filter(explode('/', $this->request_uri)));
-				if (!isset($path_parts[0]) || $path_parts[0] != $package->name) {
+				if (!isset($path_parts[0]) || $path_parts[0] !== $package->name) {
 					continue;
 				}
 
@@ -185,25 +223,11 @@ class Media {
 	}
 
 	/**
-	 * Serve the media
-	 *
-	 * @access public
-	 */
-	public function serve() {
-		// Send the Etag before potentially replying with 304
-		header('Etag: ' . crc32($this->get_mtime()) . '-' . sha1($this->get_path()));
-		$this->http_if_modified();
-		$this->serve_cache();
-		$this->serve_content();
-		exit;
-	}
-
-	/**
 	 * Send cache headers
 	 *
 	 * @access private
 	 */
-	private function serve_cache() {
+	private function serve_cache(): void {
 		$gmt_mtime = gmdate('D, d M Y H:i:s', $this->get_mtime()).' GMT';
 
 		header('Cache-Control: public');
@@ -229,7 +253,7 @@ class Media {
 	 *
 	 * @access private
 	 */
-	private function serve_content() {
+	private function serve_content(): void {
 		$filename = $this->get_path();
 		$filesize = filesize($filename);
 
@@ -254,7 +278,7 @@ class Media {
 
 				// compute content length
 				$content_length = 0;
-				foreach ($ranges as $range){
+				foreach ($ranges as $range) {
 					$first = $last = 0;
 					$this->serve_content_set_range($range, $filesize, $first, $last);
 					$content_length += strlen("\r\n--" . $boundary . "\r\n");
@@ -314,34 +338,31 @@ class Media {
 	}
 
 	/**
-	* Sets the first and last bytes of a range, given a range expressed as a
-	* string and the size of the file.
-	*
-	* If the end of the range is not specified, or the end of the range is
-	* greater than the length of the file, $last is set as the end of the file.
-	*
-	* If the begining of the range is not specified, the meaning of the value
-	* after the dash is "get the last n bytes of the file".
-	*
-	* If $first is greater than $last, the range is not satisfiable, and we
-	* should return a response with a status of 416 (Requested range not
-	* satisfiable).
-	*
-	* Examples:
-	* $range='0-499', $filesize=1000 => $first=0, $last=499
-	* $range='500-', $filesize=1000 => $first=500, $last=999
-	* $range='500-1200', $filesize=1000 => $first=500, $last=999
-	* $range='-200', $filesize=1000 => $first=800, $last=999
-	*
-	* @access private
-	* @param string $range
-	* @param int $filezise
-	* @param int $first
-	* @param int $last
-	*/
-	private function serve_content_set_range(string $range, int $filesize, int &$first, int &$last) {
+	 * Sets the first and last bytes of a range, given a range expressed as a
+	 * string and the size of the file.
+	 *
+	 * If the end of the range is not specified, or the end of the range is
+	 * greater than the length of the file, $last is set as the end of the file.
+	 *
+	 * If the begining of the range is not specified, the meaning of the value
+	 * after the dash is "get the last n bytes of the file".
+	 *
+	 * If $first is greater than $last, the range is not satisfiable, and we
+	 * should return a response with a status of 416 (Requested range not
+	 * satisfiable).
+	 *
+	 * Examples:
+	 * $range='0-499', $filesize=1000 => $first=0, $last=499
+	 * $range='500-', $filesize=1000 => $first=500, $last=999
+	 * $range='500-1200', $filesize=1000 => $first=500, $last=999
+	 * $range='-200', $filesize=1000 => $first=800, $last=999
+	 *
+	 * @access private
+	 * @param int $filezise
+	 */
+	private function serve_content_set_range(string $range, int $filesize, int &$first, int &$last): void {
 		// $range in the correct format by earlier validation
-		list($first, $last) = explode('-', $range);
+		[$first, $last] = explode('-', $range);
 
 		if ($first === '') {
 			// suffix byte range: gets last n bytes
@@ -361,20 +382,20 @@ class Media {
 			http_response_code(416);
 			header('Status: 416 Requested range not satisfiable');
 			header('Content-Range: */' . $filesize);
-			die(); // FIXME
+			exit;
 		}
 	}
 
 	/**
-	* Outputs up to $bytes from the file $file to standard output, $buffer_size
-	* bytes at a time. $file may be pre-seeked to a sub-range of a larger file.
-	*
-	* @access private
-	* @param resource $file
-	* @param int bytes
-	* @param int buffer_size
-	*/
-	private function serve_content_buffered_read($file, int $bytes, int $buffer_size = 1024) {
+	 * Outputs up to $bytes from the file $file to standard output, $buffer_size
+	 * bytes at a time. $file may be pre-seeked to a sub-range of a larger file.
+	 *
+	 * @access private
+	 * @param resource $file
+	 * @param int bytes
+	 * @param int buffer_size
+	 */
+	private function serve_content_buffered_read($file, int $bytes, int $buffer_size = 1024): void {
 		$bytes_left = $bytes;
 
 		while ($bytes_left > 0 && !feof($file)) {
@@ -391,7 +412,7 @@ class Media {
 	 *
 	 * @access private
 	 */
-	private function http_if_modified() {
+	private function http_if_modified(): void {
 		if (!isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
 			return;
 		}
@@ -406,7 +427,7 @@ class Media {
 	 * Check for an HTTP range request, return ranges if found
 	 *
 	 * @access private
-	 * @return ?array Returns an array of requested ranges or null if not a range request
+	 * @return ?array<string> Returns an array of requested ranges or null if not a range request
 	 */
 	private function get_http_range(): ?array {
 		if ($_SERVER['REQUEST_METHOD'] !== 'GET' || !isset($_SERVER['HTTP_RANGE'])) {
@@ -443,7 +464,7 @@ class Media {
 	 * @access private
 	 * @return int $mtime
 	 */
-	private function get_mtime() {
+	private function get_mtime(): int {
 		if ($this->mtime === null) {
 			clearstatcache(true, $this->get_path());
 			$this->mtime = filemtime($this->get_path());
@@ -458,43 +479,54 @@ class Media {
 	 * @access private
 	 * @return string $mime_type
 	 */
-	private function get_mime_type() {
+	private function get_mime_type(): string {
 		$pathinfo = pathinfo($this->request_uri);
 		$mime_type = '';
 		switch ($pathinfo['extension']) {
-			case 'htm' :
-			case 'html': $mime_type = 'text/html';
-			             break;
+			case 'htm':
+			case 'html':
+				$mime_type = 'text/html';
+				break;
 
-			case 'css' : $mime_type = 'text/css';
-			             break;
+			case 'css':
+				$mime_type = 'text/css';
+				break;
 
-			case 'ico' : $mime_type = 'image/x-icon';
-			             break;
+			case 'ico':
+				$mime_type = 'image/x-icon';
+				break;
 
-			case 'js'  : $mime_type = 'text/javascript';
-			             break;
+			case 'js':
+				$mime_type = 'text/javascript';
+				break;
 
-			case 'png' : $mime_type = 'image/png';
-			             break;
+			case 'png':
+				$mime_type = 'image/png';
+				break;
 
-			case 'gif' : $mime_type = 'image/gif';
-			             break;
+			case 'gif':
+				$mime_type = 'image/gif';
+				break;
 
-			case 'jpg' :
-			case 'jpeg': $mime_type = 'image/jpeg';
-			             break;
+			case 'jpg':
+			case 'jpeg':
+				$mime_type = 'image/jpeg';
+				break;
 
-			case 'pdf' : $mime_type = 'application/pdf';
-						 break;
+			case 'pdf':
+				$mime_type = 'application/pdf';
+				break;
 
-			case 'txt' : $mime_type = 'text/plain';
-						 break;
+			case 'txt':
+				$mime_type = 'text/plain';
+				break;
 
-			case 'svg' : $mime_type = 'image/svg+xml';
-						 break;
+			case 'svg':
+				$mime_type = 'image/svg+xml';
+				break;
 
-			default    : $mime_type = 'application/octet-stream';
+			default:
+				$mime_type = 'application/octet-stream';
 		}
 
 		return $mime_type;
@@ -505,37 +537,9 @@ class Media {
 	 *
 	 * @access protected
 	 */
-	private static function fail() {
+	private static function fail(): void {
 		$application = \Skeleton\Core\Application::get();
 		$application->call_event('media', 'not_found');
 		exit;
-	}
-
-	/**
-	 * Detect if the request is a request for media
-	 *
-	 * @param $request array
-	 * @access public
-	 */
-	public static function detect($request_uri): bool {
-		// Don't bother looking up /
-		if ($request_uri === '/') {
-			return false;
-		}
-
-		$request = pathinfo($request_uri);
-
-		if (!isset($request['extension'])) {
-			return false;
-		}
-
-		$classname = get_called_class();
-		$media = new $classname($request_uri);
-		if (!$media->has_known_extension()) {
-			return false;
-		}
-
-		$media->serve();
-		return true;
 	}
 }

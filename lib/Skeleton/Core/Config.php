@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * Config class
  * Configuration for Skeleton\Core
@@ -13,18 +16,16 @@ class Config {
 	/**
 	 * Config array
 	 *
-	 * @var array
-	 * @access private
+	 * @var array<string> $config_data
 	 */
-	protected $config_data = [];
+	protected array $config_data = [];
 
 	/**
 	 * Config object
 	 *
-	 * @var Config
 	 * @access private
 	 */
-	private static $config = null;
+	private static ?self $config = null;
 
 	/**
 	 * Private (disabled) constructor
@@ -37,12 +38,10 @@ class Config {
 	/**
 	 * Get config vars as properties
 	 *
-	 * @param string name
-	 * @return mixed
 	 * @throws Exception When accessing an unknown config variable, an Exception is thrown
 	 * @access public
 	 */
-	public function __get($name) {
+	public function __get(string $name): mixed {
 		if (!isset($this->config_data[$name])) {
 			throw new \Exception('Attempting to read unkown config key: '.$name);
 		}
@@ -52,21 +51,35 @@ class Config {
 	/**
 	 * Get config vars as properties
 	 *
-	 * @param string name
-	 * @param mixed value
 	 * @access public
 	 */
-	public function __set($name, $value) {
+	public function __set(string $name, mixed $value): void {
 		$this->config_data[$name] = $value;
+	}
+
+	/**
+	 * Check if config var exists
+	 *
+	 * @access public
+	 */
+	public function __isset(string $key): bool {
+		if (!isset($this->config_data) or $this->config_data === null) {
+			$this->read();
+		}
+
+		if (isset($this->config_data[$key])) {
+			return true;
+		}
+
+		return false;
 	}
 
 	/**
 	 * Get function, returns a Config object
 	 *
-	 * @return Config
 	 * @access public
 	 */
-	public static function Get() {
+	public static function Get(): Config {
 		try {
 			$application = \Skeleton\Core\Application::get();
 			return $application->config;
@@ -79,30 +92,11 @@ class Config {
 	}
 
 	/**
-	 * Check if config var exists
-	 *
-	 * @param string key
-	 * @return bool $isset
-	 * @access public
-	 */
-	public function __isset($key) {
-		if (!isset($this->config_data) OR $this->config_data === null) {
-			$this->read();
-		}
-
-		if (isset($this->config_data[$key])) {
-			return true;
-		}
-
-		return false;
-	}
-
-	/**
 	 * Read a config file into this config
 	 *
 	 * @access public
 	 */
-	public function read_file($file) {
+	public function read_file(string $file): void {
 		if (!file_exists($file)) {
 			throw new \Exception($file . ' cannot be included in config. File does not exist.');
 		}
@@ -122,14 +116,14 @@ class Config {
 	 *
 	 * @access public
 	 */
-	public function read_path($path) {
+	public function read_path(string $path): void {
 		if (!file_exists($path)) {
 			throw new \Exception('Config directory does not exist');
 		}
 
 		$files = scandir($path);
 		foreach ($files as $file) {
-			if ($file[0] == '.') {
+			if ($file[0] === '.') {
 				continue;
 			}
 			$info = pathinfo($file);
@@ -138,7 +132,7 @@ class Config {
 				continue;
 			}
 
-			if ($info['filename'] == 'environment') {
+			if ($info['filename'] === 'environment') {
 				continue;
 			}
 
@@ -155,7 +149,7 @@ class Config {
 	 *
 	 * @access public
 	 */
-	public static function include_path($path) {
+	public static function include_path(string $path): void {
 		if (!file_exists($path)) {
 			throw new \Exception('Config directory does not exist');
 		}
@@ -175,8 +169,7 @@ class Config {
 	 *
 	 * @access public
 	 */
-	public static function include_directory($directory) {
+	public static function include_directory(string $directory): void {
 		self::include_path($directory);
 	}
-
 }

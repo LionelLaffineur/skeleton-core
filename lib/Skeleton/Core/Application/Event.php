@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * Event
  *
@@ -14,17 +17,13 @@ class Event {
 	 * Application object
 	 *
 	 * @access protected
-	 * @var \Skeleton\Core\Application $application
 	 */
-	protected $application;
+	protected \Skeleton\Core\Application $application;
 
 	/**
 	 * Constructor
-	 *
-	 * @param \Skeleton\Core\Application $application
 	 */
 	public function __construct(\Skeleton\Core\Application &$application) {
 		$this->application = $application;
 	}
-
 }

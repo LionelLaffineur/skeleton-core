@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * Util_Rewrite class
  *
@@ -11,18 +14,16 @@
 namespace Skeleton\Core;
 
 class Util {
-
 	/**
 	 * Reverse rewrite HTML documents
 	 *
 	 * @access public
-	 * @param string $html
 	 * @return string $html
 	 */
-	public static function rewrite_reverse_html($html) {
-		$html = preg_replace_callback(
+	public static function rewrite_reverse_html(string $html): string {
+		return preg_replace_callback(
 			'@\<([^>]*) (href|src|action)="\/(?!\/)([^"]*?)@iU',
-			function ($matches) {
+			static function($matches) {
 				if (!isset($matches[3])) {
 					return $matches[0];
 				}
@@ -32,37 +33,31 @@ class Util {
 			},
 			$html
 		);
-
-		return $html;
 	}
 
 	/**
 	 * Reverse rewrite CSS documents
 	 *
 	 * @access public
-	 * @param string $css
 	 * @return string $css
 	 */
-	public static function rewrite_reverse_css($css) {
-		$css = preg_replace_callback(
+	public static function rewrite_reverse_css(string $css): string {
+		return preg_replace_callback(
 			'/url\((?P<url>.*?)\)/i',
-			function ($matches) {
+			static function($matches) {
 				return 'url(' . self::rewrite_reverse(str_replace('../', '', $matches['url'])) . ')';
 			},
 			$css
 		);
-
-		return $css;
 	}
 
 	/**
 	 * Do a reverse rewrite of a link
 	 *
 	 * @access public
-	 * @param string $url
 	 * @return string $reverse_rewrite
 	 */
-	public static function rewrite_reverse($url) {
+	public static function rewrite_reverse(string $url): string {
 		$application = Application::Get();
 
 		$url = Util::rewrite_reverse_routes($url);
@@ -83,10 +78,9 @@ class Util {
 	 * Do a reverse rewrite of a link
 	 *
 	 * @access private
-	 * @param string $url_raw
 	 * @return string $reverse_rewrite
 	 */
-	private static function rewrite_reverse_routes($url_raw) {
+	private static function rewrite_reverse_routes(string $url_raw): string {
 		$url = parse_url($url_raw);
 		$params = [];
 
@@ -103,7 +97,7 @@ class Util {
 		 * Add language to the known parameters
 		 */
 		$language_added = false;
-		if (isset($application->language) AND !isset($params['language'])) {
+		if (isset($application->language) and !isset($params['language'])) {
 			$params['language'] = $application->language->name_short;
 			$language_added = true;
 		}
@@ -114,7 +108,7 @@ class Util {
 		if (!isset($url['path'])) {
 			return $url_raw;
 		}
-		if ($url['path'] != '' AND $url['path'][0] == '/') {
+		if ($url['path'] !== '' and $url['path'][0] === '/') {
 			$url['path'] = substr($url['path'], 1);
 		}
 
@@ -127,14 +121,13 @@ class Util {
 			// No suitable classname found, reverse rewrite not possible
 		}
 
-
 		$module_defined = false;
 
 		if (isset($routes[$classname])) {
 			$module_defined = true;
-/*		} elseif (isset($routes[$module_name . '_index'])) {
-			$module_name = $module_name . '_index';
-			$module_defined = true;*/
+			/*		} elseif (isset($routes[$module_name . '_index'])) {
+						$module_name = $module_name . '_index';
+						$module_defined = true;*/
 		}
 
 		if (!$module_defined) {
@@ -149,14 +142,13 @@ class Util {
 		foreach ($routes as $route) {
 			$route_parts = explode('/', $route);
 			$route_part_matches = 0;
-			$params_matches = 0;
 
 			foreach ($route_parts as $key => $route_part) {
-				if (trim($route_part) == '') {
+				if (trim($route_part) === '') {
 					unset($route_parts[$key]);
 					continue;
 				}
-				if ($route_part[0] != '$') {
+				if ($route_part[0] !== '$') {
 					$route_part_matches++;
 					continue;
 				}
@@ -183,9 +175,8 @@ class Util {
 					/**
 					 * if there are no required values => Proceed
 					 */
-					if (count($required_values) == 0) {
+					if (count($required_values) === 0) {
 						$route_part_matches++;
-						$params_matches++;
 						continue;
 					}
 
@@ -194,20 +185,19 @@ class Util {
 					 */
 					$values_ok = false;
 					foreach ($required_values as $required_value) {
-						if ($required_value == $params[$route_part]) {
+						if ($required_value === $params[$route_part]) {
 							$values_ok = true;
 						}
 					}
 
 					if ($values_ok) {
 						$route_part_matches++;
-						$params_matches++;
 						continue;
 					}
 				}
 			}
 
-			if ($route_part_matches == count($route_parts) AND $route_part_matches > $correct_route_params_matches) {
+			if ($route_part_matches === count($route_parts) and $route_part_matches > $correct_route_params_matches) {
 				$correct_route = $route_parts;
 				$correct_route_params_matches = $route_part_matches;
 			}
@@ -215,18 +205,17 @@ class Util {
 
 		if ($correct_route === null) {
 			return $url_raw;
-		} else {
-			$new_url = '';
-			foreach ($correct_route as $url_part) {
-				if ($url_part[0] !== '$') {
-					$new_url .= '/' . $url_part;
-					continue;
-				}
-
-				$url_part = substr($url_part, 1);
-				$new_url .= '/' . $params[$url_part];
-				unset($params[$url_part]);
+		}
+		$new_url = '';
+		foreach ($correct_route as $url_part) {
+			if ($url_part[0] !== '$') {
+				$new_url .= '/' . $url_part;
+				continue;
 			}
+
+			$url_part = substr($url_part, 1);
+			$new_url .= '/' . $params[$url_part];
+			unset($params[$url_part]);
 		}
 
 		/**
@@ -239,7 +228,7 @@ class Util {
 		/**
 		 * If the first character is a /, remove it
 		 */
-		if ($new_url[0] == '/') {
+		if ($new_url[0] === '/') {
 			$new_url = substr($new_url, 1);
 		}
 

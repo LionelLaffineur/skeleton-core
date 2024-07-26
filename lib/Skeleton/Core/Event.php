@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * Event
  *
@@ -10,5 +13,4 @@
 namespace Skeleton\Core;
 
 class Event {
-
 }

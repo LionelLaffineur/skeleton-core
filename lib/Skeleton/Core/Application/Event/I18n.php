@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * I18n Context
  *
@@ -10,7 +13,6 @@
 namespace Skeleton\Core\Application\Event;
 
 class I18n extends \Skeleton\Core\Application\Event {
-
 	/**
 	 * Get the translator extractor for this app
 	 *
@@ -39,8 +41,7 @@ class I18n extends \Skeleton\Core\Application\Event {
 			throw new \Exception('No po storage path defined, cannot setup translation');
 		}
 
-		$translator_storage_po = new \Skeleton\I18n\Translator\Storage\Po();
-		return $translator_storage_po;
+		return new \Skeleton\I18n\Translator\Storage\Po();
 	}
 
 	/**
@@ -81,15 +82,17 @@ class I18n extends \Skeleton\Core\Application\Event {
 				$all_languages[$language->name_short] = $language;
 			}
 
-			$matching_language = \Skeleton\I18n\Util::get_best_matching_language($_SERVER['HTTP_ACCEPT_LANGUAGE'], $available_languages);
-			if ($matching_language === false) {
+			$matching = $_SERVER['HTTP_ACCEPT_LANGUAGE'];
+			$matching = \Skeleton\I18n\Util::get_best_matching_language($matching, $available_languages);
+
+			if ($matching === false) {
 				throw new \Exception('No matching language found');
 			}
-			$language = $all_languages[$matching_language];
+
+			$language = $all_languages[$matching];
 		} catch (\Exception $e) {
 			$language = $language_interface::get_by_name_short($this->application->config->default_language);
 		}
 		return $language;
 	}
-
 }

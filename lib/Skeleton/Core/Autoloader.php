@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * Skeleton PSR-0 compliant autoloader
  *
@@ -12,31 +15,21 @@
 namespace Skeleton\Core;
 
 class Autoloader {
+	private string $file_extension = '.php';
+
+	private ?string $namespace = null;
 
 	/**
-	 * @var string $file_extension
+	 * @var array<string> $include_paths
 	 */
-	private $file_extension = '.php';
+	private array $include_paths = [];
 
 	/**
-	 * @var string $namespace
+	 * @var array<string> $namespaces
 	 */
-	private $namespace = null;
+	private array $namespaces = [];
 
-	/**
-	 * @var string $include_paths
-	 */
-	private $include_paths = [];
-
-	/**
-	 * @var string $namespaces
-	 */
-	private $namespaces = [];
-
-	/**
-	 * @var string $namespace_separator
-	 */
-	private $namespace_separator = '\\';
+	private string $namespace_separator = '\\';
 
 	/**
 	 * Sets the namespace separator used by classes in the namespace of this
@@ -44,30 +37,26 @@ class Autoloader {
 	 *
 	 * @param string $sep The separator to use.
 	 */
-	public function set_namespace_separator($sep) {
+	public function set_namespace_separator(string $sep): void {
 		$this->namespace_separator = $sep;
 	}
 
 	/**
 	 * Gets the namespace seperator used by classes in the namespace of this
 	 * class loader.
-	 *
-	 * @return void
 	 */
-	public function get_namespace_separator() {
+	public function get_namespace_separator(): string {
 		return $this->namespace_separator;
 	}
 
 	/**
 	 * Adds an include path for all class files in the namespace of this
 	 * class loader.
-	 *
-	 * @param string $include_path
 	 */
-	public function add_include_path($include_path, $class_prefix = '') {
+	public function add_include_path(string $include_path, string $class_prefix = ''): void {
 		$this->include_paths[] = [
 			'include_path' => $include_path,
-			'class_prefix' => $class_prefix
+			'class_prefix' => $class_prefix,
 		];
 	}
 
@@ -75,10 +64,8 @@ class Autoloader {
 	 * Search for a namespace in a given path
 	 *
 	 * @access public
-	 * @param string $namespace
-	 * @param string $path
 	 */
-	public function add_namespace($namespace, $path) {
+	public function add_namespace(string $namespace, string $path): void {
 		$this->namespaces[$namespace] = $path;
 	}
 
@@ -87,18 +74,14 @@ class Autoloader {
 	 *
 	 * @return string $include_path
 	 */
-	public function get_include_paths() {
+	public function get_include_paths(): string {
 		return $this->include_paths;
 	}
 
-
-
 	/**
 	 * Sets the file extension of class files in the namespace of this class loader.
-	 *
-	 * @param string $file_extension
 	 */
-	public function set_file_extension($file_extension) {
+	public function set_file_extension(string $file_extension): void {
 		$this->file_extension = $file_extension;
 	}
 
@@ -107,21 +90,21 @@ class Autoloader {
 	 *
 	 * @return string $file_extension
 	 */
-	public function get_file_extension() {
+	public function get_file_extension(): string {
 		return $this->file_extension;
 	}
 
 	/**
 	 * Installs this class loader on the SPL autoload stack.
 	 */
-	public function register() {
+	public function register(): void {
 		spl_autoload_register([$this, 'load_class']);
 	}
 
 	/**
 	 * Uninstalls this class loader from the SPL autoloader stack.
 	 */
-	public function unregister() {
+	public function unregister(): void {
 		spl_autoload_unregister([$this, 'load_class']);
 	}
 
@@ -129,15 +112,15 @@ class Autoloader {
 	 * Loads the given class or interface.
 	 *
 	 * @param string $class_name The name of the class to load.
-	 * @return void
 	 */
-	public function load_class($class_name) {
+	public function load_class(string $class_name): bool {
 		foreach ($this->namespaces as $namespace => $namespace_path) {
 			if (strpos('\\' . strtolower($class_name), strtolower($namespace)) !== 0) {
 				continue;
 			}
 
-			$file_path = str_replace(' ', DIRECTORY_SEPARATOR, ucwords(str_replace('\\', ' ', str_replace(strtolower($namespace), '', '\\' . strtolower($class_name))))) . '.php';
+			$file_path = str_replace(strtolower($namespace), '', '\\' . strtolower($class_name));
+			$file_path = str_replace(' ', DIRECTORY_SEPARATOR, ucwords(str_replace('\\', ' ', $file_path))) . '.php';
 			$file_path = $namespace_path . DIRECTORY_SEPARATOR . $file_path;
 
 			try {
@@ -147,11 +130,14 @@ class Autoloader {
 					class_parents($class_name, true);
 					return true;
 				}
-			} catch (\Skeleton\Core\Exception\Autoloading $e) { }
+			} catch (\Skeleton\Core\Exception\Autoloading $e) {
+			}
 		}
 
 		foreach ($this->include_paths as $include_path) {
-			$file_path = str_replace(' ', '/', ucwords(str_replace('_', ' ', str_replace('\\', ' ', strtolower(str_replace($include_path['class_prefix'], '', $class_name)))))) . '.php';
+			$file_path = strtolower(str_replace($include_path['class_prefix'], '', $class_name));
+			$file_path = ucwords(str_replace('_', ' ', str_replace('\\', ' ', $file_path)));
+			$file_path = str_replace(' ', '/', $file_path) . '.php';
 
 			try {
 				$path = $include_path['include_path'] . '/' . $file_path;
@@ -161,7 +147,8 @@ class Autoloader {
 					class_parents($class_name, true);
 					return true;
 				}
-			} catch (\Skeleton\Core\Exception\Autoloading $e) { }
+			} catch (\Skeleton\Core\Exception\Autoloading $e) {
+			}
 
 			/**
 			 * If the file is not found, try with all lower case. This should be
@@ -175,26 +162,28 @@ class Autoloader {
 					class_parents($class_name, true);
 					return true;
 				}
-			} catch (\Skeleton\Core\Exception\Autoloading $e) { }
-
+			} catch (\Skeleton\Core\Exception\Autoloading $e) {
+			}
 		}
+
+		return false;
 	}
 
 	/**
 	 * Require a file
 	 *
 	 * @access private
-	 * @param string $path
 	 */
-	private function require_file($path) {
+	private function require_file(string $path): bool {
 		$path = realpath($path);
-		if (file_exists($path)) {
+
+		if ($path !== false && file_exists($path)) {
 			require_once $path;
 
 			// Opcache compilation
 			$opcache_enabled = ini_get('opcache.enable');
 			$opcache_cli_enabled = ini_get('opcache.enable_cli');
-			if ( (php_sapi_name() == 'cli' and $opcache_cli_enabled) or (php_sapi_name() != 'cli' and $opcache_enabled)) {
+			if ((PHP_SAPI === 'cli' and $opcache_cli_enabled) or (PHP_SAPI !== 'cli' and $opcache_enabled)) {
 				if (function_exists('opcache_is_script_cached') and function_exists('opcache_compile_file')) {
 					if (!opcache_is_script_cached($path)) {
 						// We have noticed OPcache sometimes yields a warning when compiling a file,
@@ -210,8 +199,8 @@ class Autoloader {
 			}
 
 			return true;
-		} else {
-			throw new \Skeleton\Core\Exception\Autoloading('File not found');
 		}
+
+		throw new \Skeleton\Core\Exception\Autoloading('File not found');
 	}
 }

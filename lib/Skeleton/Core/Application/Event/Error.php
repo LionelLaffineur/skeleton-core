@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * Error Context
  *
@@ -10,7 +13,6 @@
 namespace Skeleton\Core\Application\Event;
 
 class Error extends \Skeleton\Core\Application\Event {
-
 	/**
 	 * Exception denied
 	 *
@@ -31,8 +33,7 @@ class Error extends \Skeleton\Core\Application\Event {
 	 *
 	 * @access public
 	 */
-	public function sentry_before_send(\Sentry\Event $event) {
+	public function sentry_before_send(\Sentry\Event $event): \Sentry\Event {
 		return $event;
 	}
-
 }

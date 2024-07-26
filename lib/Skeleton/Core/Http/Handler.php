@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * HTTP request Handler
  *
@@ -17,11 +20,7 @@ class Handler {
 	 *
 	 * @access public
 	 */
-	public static function run() {
-		/**
-		 * Record the start time in microseconds
-		 */
-		$start = microtime(true);
+	public static function run(): void {
 		mb_internal_encoding('utf-8');
 
 		/**
@@ -34,12 +33,6 @@ class Handler {
 		 */
 		$components = parse_url($_SERVER['REQUEST_URI']);
 
-		if (isset($components['query'])) {
-			$query_string = $components['query'];
-		} else {
-			$query_string = '';
-		}
-
 		if (isset($components['path']) and $components['path'] !== '/') {
 			$request_uri_parts = explode('/', $components['path']);
 			array_shift($request_uri_parts);
@@ -49,7 +42,7 @@ class Handler {
 
 		$request_uri = '/' . implode('/', $request_uri_parts) . '/';
 
-		 // Find out what the hostname is, if none was found, bail out
+		// Find out what the hostname is, if none was found, bail out
 		if (isset($_SERVER['HTTP_X_FORWARDED_HOST'])) {
 			$elements = explode(',', $_SERVER['HTTP_X_FORWARDED_HOST']);
 			$hostname = trim(end($elements));

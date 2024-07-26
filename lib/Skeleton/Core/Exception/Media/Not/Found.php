@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * Skeleton Core Application class
  *
@@ -8,4 +11,5 @@
 
 namespace Skeleton\Core\Exception\Media\Not;
 
-class Found extends \Exception {}
+class Found extends \Exception {
+}
