@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * Media Context
  *
@@ -10,7 +13,6 @@
 namespace Skeleton\Core\Application\Event;
 
 class Media extends \Skeleton\Core\Application\Event {
-
 	/**
 	 * Media not found
 	 *
@@ -19,5 +21,4 @@ class Media extends \Skeleton\Core\Application\Event {
 	public function not_found(): void {
 		throw new \Skeleton\Core\Exception\Media\Not\Found('File not found');
 	}
-
 }

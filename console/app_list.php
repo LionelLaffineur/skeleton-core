@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * i18n:generate command for Skeleton Console
  *
@@ -9,25 +12,17 @@
 
 namespace Skeleton\Console\Command;
 
-use Symfony\Component\Console\Input\InputArgument;
-use Symfony\Component\Console\Input\InputInterface;
-use Symfony\Component\Console\Input\InputOption;
-use Symfony\Component\Console\Output\OutputInterface;
-use Aptoma\Twig\Extension\MarkdownExtension;
-use Aptoma\Twig\Extension\MarkdownEngine;
 use Symfony\Component\Console\Helper\Table;
-use Symfony\Component\Console\Helper\TableCell;
+use Symfony\Component\Console\Input\InputInterface;
+use Symfony\Component\Console\Output\OutputInterface;
 
 class Core_App_List extends \Skeleton\Console\Command {
-
-	protected $twig_extractor = null;
-
 	/**
 	 * Configure the Create command
 	 *
 	 * @access protected
 	 */
-	protected function configure() {
+	protected function configure(): void {
 		$this->setName('core:app:list');
 		$this->setDescription('Lists all applications in this project');
 	}
@@ -36,8 +31,6 @@ class Core_App_List extends \Skeleton\Console\Command {
 	 * Execute the Command
 	 *
 	 * @access protected
-	 * @param InputInterface $input
-	 * @param OutputInterface $output
 	 */
 	protected function execute(InputInterface $input, OutputInterface $output) {
 		$applications = \Skeleton\Core\Application::get_all();
@@ -50,12 +43,11 @@ class Core_App_List extends \Skeleton\Console\Command {
 			$rows[] = [
 				$application->name,
 				implode(', ', $application->config->hostnames),
-				$application->config->application_type
+				$application->config->application_type,
 			];
 		}
 		$table->setRows($rows);
 		$table->render();
 		return 0;
 	}
-
 }

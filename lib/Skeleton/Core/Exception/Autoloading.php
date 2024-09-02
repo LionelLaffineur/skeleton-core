@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * Skeleton Core Application class
  *
@@ -8,4 +11,5 @@
 
 namespace Skeleton\Core\Exception;
 
-class Autoloading extends \Exception {}
+class Autoloading extends \Exception {
+}

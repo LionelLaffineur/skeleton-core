@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * HTTP status code collection
  *
@@ -9,8 +12,15 @@
 namespace Skeleton\Core\Http;
 
 class Status {
-
-	public static function __callStatic($method, $args) {
+	/**
+	 * Implement all HTTP codes as methods with signature:
+	 *
+	 *   code_<value>(string $message, bool $exit = true)
+	 *
+	 * @param $args mixed[]
+	 * @access public
+	 */
+	public static function __callStatic(string $method, array $args): void {
 		$statuses = [
 			[ 'status' => 100, 'error' => 'Continue' ],
 			[ 'status' => 101, 'error' => 'Switching Protocols' ],
@@ -100,7 +110,7 @@ class Status {
 		header('HTTP/1.1 ' . $code . ' ' . $error . $message, true);
 		echo $code . ' ' . $error . $message;
 		if ($exit) {
-			exit();
+			exit;
 		}
 	}
 }

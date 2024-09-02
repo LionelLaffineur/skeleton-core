@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * Skeleton Core Application class
  *
@@ -8,158 +11,97 @@
 
 namespace Skeleton\Core;
 
-class Exception_Unknown_Application extends \Exception {}
+class Exception_Unknown_Application extends \Exception {
+}
 
 abstract class Application {
-
-	/**
-	 * Application
-	 *
-	 * @var Application $application
-	 * @access private
-	 */
-	private static $application = null;
-
 	/**
 	 * Path
 	 *
-	 * @var string $path
 	 * @access public
 	 */
-	public $path = null;
+	public ?string $path = null;
 
 	/**
 	 * Event Path
 	 *
-	 * @var string $event_path
 	 * @access public
 	 */
-	public $event_path = null;
+	public ?string $event_path = null;
 
 	/**
 	 * Event Namespace
 	 *
-	 * @var string $event_namespace
 	 * @access public
 	 */
-	public $event_namespace = null;
+	public ?string $event_namespace = null;
 
 	/**
 	 * Name
 	 *
-	 * @var string $name
 	 * @access public
 	 */
-	public $name = null;
+	public ?string $name = null;
 
 	/**
 	 * Hostname
 	 *
-	 * @var string $hostname
 	 * @access public
 	 */
-	public $hostname = null;
+	public ?string $hostname = null;
 
 	/**
 	 * Matched hostname
 	 * This variable contains the config value for the matched hostname
 	 *
-	 * @var string $matched_hostname
 	 * @access public
 	 */
-	public $matched_hostname = null;
+	public ?string $matched_hostname = null;
 
 	/**
 	 * Relative URI to the application's base URI
 	 *
-	 * @var string $request_relative_uri
 	 * @access public
 	 */
-	public $request_relative_uri = null;
+	public ?string $request_relative_uri = null;
 
 	/**
 	 * Language
 	 *
 	 * @access public
-	 * @var Language $language
 	 */
-	public $language = null;
+	//public ?Language $language = null;
 
 	/**
 	 * Config object
 	 *
 	 * @access public
-	 * @var Config $config
 	 */
-	public $config = null;
+	public ?Config $config = null;
 
 	/**
 	 * Events
 	 *
+	 * @var array<string> $events
 	 * @access public
-	 * @var array $events
 	 */
-	public $events = [];
+	public array $events = [];
+
+	/**
+	 * Application
+	 *
+	 * @access private
+	 */
+	private static ?Application $application = null;
 
 	/**
 	 * Constructor
 	 *
 	 * @access public
 	 */
-	public function __construct($name) {
+	public function __construct(string $name) {
 		$this->name = $name;
 		$this->get_details();
-	}
-
-	/**
-	 * Get details of application
-	 *
-	 * @access protected
-	 */
-	protected function get_details() {
-		$config = clone Config::get();
-		$this->config = $config;
-
-		/**
-		 * @deprecated: this is for backwards compatibility
-		 */
-		if (isset($config->application_dir) and !isset($config->application_path)) {
-			$config->application_path = $config->application_dir;
-		}
-
-		$application_path = realpath($config->application_path . '/' . $this->name);
-
-		if (!file_exists($application_path)) {
-			throw new \Exception('Application with name "' . $this->name . '" not found');
-		}
-		$this->path = $application_path;
-		$this->event_path = $this->path . '/event/';
-		$this->event_namespace = "\\App\\" . ucfirst($this->name) . "\Event\\";
-
-		if (file_exists($this->event_path)) {
-			$autoloader = new \Skeleton\Core\Autoloader();
-			$autoloader->add_namespace($this->event_namespace, $this->event_path);
-			$autoloader->register();
-		}
-
-		$this->load_config();
-	}
-
-	/**
-	 * Load the config
-	 *
-	 * @access private
-	 */
-	protected function load_config() {
-		if (!file_exists($this->path . '/config')) {
-			throw new \Exception('No config directory created in app ' . $this->path);
-		}
-
-		/**
-		 * Set some defaults
-		 */
-		$this->config->application_type = '\Skeleton\Core\Application\Web';
-		$this->config->read_path($this->path . '/config');
 	}
 
 	/**
@@ -167,7 +109,7 @@ abstract class Application {
 	 *
 	 * @access public
 	 */
-	public function accept() {
+	public function accept(): void {
 		/**
 		 * If this application is launched while another application has been
 		 * set, we need to take over the request_relative_uri
@@ -192,17 +134,14 @@ abstract class Application {
 	 *
 	 * @access public
 	 */
-	abstract public function run();
+	abstract public function run(): void;
 
 	/**
-	 * Check if an event exists
+	 * Load all events
 	 *
 	 * @access public
-	 * @param string $context
-	 * @param string $action
-	 * @return bool $exists
 	 */
-	public function load_event($requested_context) {
+	public function load_event(string $requested_context): object {
 		if (isset($this->events[$requested_context])) {
 			return $this->events[$requested_context];
 		}
@@ -210,14 +149,16 @@ abstract class Application {
 		$events = $this->get_events();
 
 		foreach ($events as $context => $default) {
-			if (strtolower($context) != strtolower($requested_context)) {
+			if (strtolower($context) !== strtolower($requested_context)) {
 				continue;
 			}
+
 			$application_event = '\\App\\' . ucfirst($this->name) . '\\Event\\' . ucfirst($context);
 			if (class_exists($application_event)) {
 				if (!is_a($application_event, $default, true)) {
 					throw new \Exception('Event ' . $application_event . ' should extend from ' . $default);
 				}
+
 				$event = new $application_event($this);
 				$this->events[strtolower($context)] = $event;
 				return $this->events[strtolower($context)];
@@ -232,31 +173,12 @@ abstract class Application {
 	}
 
 	/**
-	 * Get events
-	 *
-	 * Get a list of events for this application.
-	 * The returned array has the context as key, the value is the classname
-	 * of the default event
-	 *
-	 * @access protected
-	 * @return array $events
-	 */
-	protected function get_events(): array {
-		return [
-			'Application' => '\\Skeleton\\Core\\Application\\Event\\Application',
-			'Error' => '\\Skeleton\\Core\\Application\\Event\\Error',
-			'Media' => '\\Skeleton\\Core\\Application\\Event\\Media',
-		];
-	}
-
-	/**
 	 * Call event
 	 *
 	 * @access public
-	 * @param string $context
-	 * @param string $action
+	 * @param $arguments mixed[]
 	 */
-	public function call_event($context, $action, $arguments = []) {
+	public function call_event(string $context, string $action, array $arguments = []): mixed {
 		$event = $this->load_event($context);
 		return call_user_func_array([$event, $action], $arguments);
 	}
@@ -265,30 +187,28 @@ abstract class Application {
 	 * Event exists
 	 *
 	 * @access public
-	 * @param string $context
-	 * @param string $action
 	 */
-	public function event_exists($context, $action) {
+	public function event_exists(string $context, string $action): bool {
 		try {
 			$event = $this->load_event($context);
 		} catch (\Exception $e) {
 			return false;
 		}
+
 		if (is_callable([$event, $action])) {
 			return true;
 		}
+
 		return false;
 	}
 
 	/**
 	 * Get a callable for an event
 	 *
+	 * @return array<\Skeleton\Core\Application\Event\Application, string>
 	 * @access public
-	 * @param string $context
-	 * @param string $action
-	 * @return array
 	 */
-	public function get_event_callable(string $context, string $action) {
+	public function get_event_callable(string $context, string $action): array {
 		$event = $this->load_event($context);
 		return [$event, $action];
 	}
@@ -297,12 +217,11 @@ abstract class Application {
 	 * Call event if exists
 	 *
 	 * @access public
-	 * @param string $context
-	 * @param string $action
+	 * @param $arguments mixed[]
 	 */
-	public function call_event_if_exists($context, $action, $arguments = []) {
+	public function call_event_if_exists(string $context, string $action, array $arguments = []): mixed {
 		if (!$this->event_exists($context, $action)) {
-			return;
+			return null;
 		}
 
 		return call_user_func_array($this->get_event_callable($context, $action), $arguments);
@@ -316,7 +235,7 @@ abstract class Application {
 	 * @access public
 	 * @return Application $application
 	 */
-	public static function get() {
+	public static function get(): Application {
 		if (self::$application === null) {
 			throw new \Exception('No application set');
 		}
@@ -328,22 +247,18 @@ abstract class Application {
 	 * Set
 	 *
 	 * @access public
-	 * @param Application $application
 	 */
-	public static function set(Application $application = null) {
+	public static function set(?Application $application = null): void {
 		self::$application = $application;
 	}
 
 	/**
 	 * Detect
 	 *
-	 * @param string $hostname
-	 * @param string $request_uri
 	 * @access public
 	 * @return Application $application
 	 */
-	public static function detect($hostname, $request_uri) {
-
+	public static function detect(string $hostname, string $request_uri): Application {
 		// If we already have a cached application, return that one
 		if (self::$application !== null) {
 			return Application::get();
@@ -351,8 +266,10 @@ abstract class Application {
 
 		// If multiple host headers have been set, use the last one
 		if (strpos($hostname, ', ') !== false) {
-			list($hostname, $discard) = array_reverse(explode(', ', $hostname));
+			[$hostname, $discard] = array_reverse(explode(', ', $hostname));
 		}
+
+		unset($discard);
 
 		// Find matching applications
 		$applications = self::get_all();
@@ -375,7 +292,7 @@ abstract class Application {
 					}
 				}
 
-				if (count($wildcard_hostnames) == 0) {
+				if (count($wildcard_hostnames) === 0) {
 					continue;
 				}
 
@@ -391,7 +308,7 @@ abstract class Application {
 
 		// Set required variables in the matched Application objects
 		foreach ($matched_applications as $key => $application) {
-			 // Set the relative request URI according to the application
+			// Set the relative request URI according to the application
 			if (isset($application->config->base_uri) and ($application->config->base_uri !== '/')) {
 				$application->request_relative_uri = str_replace($application->config->base_uri, '', $request_uri);
 			} else {
@@ -404,7 +321,7 @@ abstract class Application {
 
 		// Now that we have matching applications, see if one matches the
 		// request specifically. Otherwise, simply return the first one.
-		$matched_applications_sorted = [];
+		$sorted = [];
 		foreach ($matched_applications as $application) {
 			/**
 			 * Matched hostname can be null
@@ -417,21 +334,21 @@ abstract class Application {
 
 			if (isset($application->config->base_uri)) {
 				// base_uri should not be empty, default to '/'
-				if ($application->config->base_uri == '') {
+				if ($application->config->base_uri === '') {
 					$application->config->base_uri = '/';
 				}
 
 				if (strpos($request_uri, $application->config->base_uri) === 0) {
-					$matched_applications_sorted[strlen($matched_hostname)][strlen($application->config->base_uri)] = $application;
+					$sorted[strlen($matched_hostname)][strlen($application->config->base_uri)] = $application;
 				}
 			} else {
-				$matched_applications_sorted[strlen($matched_hostname)][0] = $application;
+				$sorted[strlen($matched_hostname)][0] = $application;
 			}
 		}
 
 		// Sort the matched array by key, so the most specific one is at the end
-		ksort($matched_applications_sorted);
-		$applications = array_pop($matched_applications_sorted);
+		ksort($sorted);
+		$applications = array_pop($sorted);
 
 		if (is_array($applications) && count($applications) > 0) {
 			// Get the most specific one
@@ -448,24 +365,27 @@ abstract class Application {
 	 * Get all
 	 *
 	 * @access public
-	 * @return array $applications
+	 * @return array<self> $applications
 	 */
-	public static function get_all() {
+	public static function get_all(): array {
 		$config = Config::get();
 
 		if (!isset($config->application_path)) {
 			throw new \Exception('No application_path set. Please set "application_path" in project configuration');
 		}
+
 		$application_paths = scandir($config->application_path);
 		$applications = [];
+
 		foreach ($application_paths as $application_path) {
-			if ($application_path[0] == '.') {
+			if ($application_path[0] === '.') {
 				continue;
 			}
 
 			$application = self::get_by_name($application_path);
 			$applications[] = $application;
 		}
+
 		return $applications;
 	}
 
@@ -473,10 +393,9 @@ abstract class Application {
 	 * Get application by name
 	 *
 	 * @access public
-	 * @param string $name
 	 * @return Application $application
 	 */
-	public static function get_by_name($name) {
+	public static function get_by_name(string $name): Application {
 		$application_type = self::get_application_type($name);
 		return new $application_type($name);
 	}
@@ -486,9 +405,8 @@ abstract class Application {
 	 *
 	 * @access public
 	 * @return string $classname
-	 * @param string $application_name
 	 */
-	public static function get_application_type($application_name): string {
+	public static function get_application_type(string $application_name): string {
 		$config = clone Config::get();
 		$application_path = realpath($config->application_path . '/' . $application_name);
 
@@ -504,4 +422,72 @@ abstract class Application {
 		return $config->application_type;
 	}
 
+	/**
+	 * Get details of application
+	 *
+	 * @access protected
+	 */
+	protected function get_details(): void {
+		$config = clone Config::get();
+		$this->config = $config;
+
+		/**
+		 * @deprecated: this is for backwards compatibility
+		 */
+		if (isset($config->application_dir) and !isset($config->application_path)) {
+			$config->application_path = $config->application_dir;
+		}
+
+		$application_path = realpath($config->application_path . '/' . $this->name);
+
+		if (!file_exists($application_path)) {
+			throw new \Exception('Application with name "' . $this->name . '" not found');
+		}
+		$this->path = $application_path;
+		$this->event_path = $this->path . '/event/';
+		$this->event_namespace = '\\App\\' . ucfirst($this->name) . "\Event\\";
+
+		if (file_exists($this->event_path)) {
+			$autoloader = new \Skeleton\Core\Autoloader();
+			$autoloader->add_namespace($this->event_namespace, $this->event_path);
+			$autoloader->register();
+		}
+
+		$this->load_config();
+	}
+
+	/**
+	 * Load the config
+	 *
+	 * @access private
+	 */
+	protected function load_config(): void {
+		if (!file_exists($this->path . '/config')) {
+			throw new \Exception('No config directory created in app ' . $this->path);
+		}
+
+		/**
+		 * Set some defaults
+		 */
+		$this->config->application_type = '\Skeleton\Core\Application\Web';
+		$this->config->read_path($this->path . '/config');
+	}
+
+	/**
+	 * Get events
+	 *
+	 * Get a list of events for this application.
+	 * The returned array has the context as key, the value is the classname
+	 * of the default event
+	 *
+	 * @access protected
+	 * @return array<string> $events
+	 */
+	protected function get_events(): array {
+		return [
+			'Application' => '\\Skeleton\\Core\\Application\\Event\\Application',
+			'Error' => '\\Skeleton\\Core\\Application\\Event\\Error',
+			'Media' => '\\Skeleton\\Core\\Application\\Event\\Media',
+		];
+	}
 }

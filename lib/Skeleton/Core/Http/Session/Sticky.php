@@ -1,4 +1,7 @@
 <?php
+
+declare(strict_types=1);
+
 /**
  * Sticky session store
  *
@@ -9,25 +12,19 @@
 
 namespace Skeleton\Core\Http\Session;
 
-use Skeleton\Core\Config;
-
 class Sticky {
-
+	/**
+	 * Module
+	 *
+	 * @access private
+	 */
+	public ?string $module = null;
 	/**
 	 * Session object
 	 *
 	 * @access private
-	 * @var Web_Session $session
 	 */
-	private static $sticky_session = null;
-
-	/**
-	 * Module
-	 *
-	 * @var string $module
-	 * @access private
-	 */
-	public $module = null;
+	private static ?self $sticky_session = null;
 
 	/**
 	 * Contructor
@@ -43,14 +40,14 @@ class Sticky {
 	 * Set
 	 *
 	 * @access public
-	 * @param string $key
-	 * @param string $value
 	 */
-	public function __set($key, $value) {
+	public function __set(string $key, mixed $value): void {
 		$application = \Skeleton\Core\Application::get();
+
 		if (!isset($_SESSION[$application->config->sticky_session_name])) {
 			$_SESSION[$application->config->sticky_session_name] = [];
 		}
+
 		$_SESSION[$application->config->sticky_session_name][$key] = ['counter' => 0, 'data' => $value];
 	}
 
@@ -58,14 +55,14 @@ class Sticky {
 	 * Get
 	 *
 	 * @access public
-	 * @param string $key
-	 * @param bool $remove_after_get
 	 */
-	public function __get($key) {
+	public function __get(string $key): mixed {
 		$application = \Skeleton\Core\Application::get();
+
 		if (!isset($_SESSION[$application->config->sticky_session_name][$key])) {
 			throw new Exception('Key not found');
 		}
+
 		return $_SESSION[$application->config->sticky_session_name][$key]['data'];
 	}
 
@@ -73,24 +70,23 @@ class Sticky {
 	 * Isset
 	 *
 	 * @access public
-	 * @param string $key
 	 */
-	public function __isset($key) {
+	public function __isset(string $key): bool {
 		$application = \Skeleton\Core\Application::get();
+
 		if (!isset($_SESSION[$application->config->sticky_session_name][$key])) {
 			return false;
-		} else {
-			return true;
 		}
+
+		return true;
 	}
 
 	/**
 	 * Unset
 	 *
 	 * @access public
-	 * @param string $key
 	 */
-	public function __unset($key) {
+	public function __unset(string $key): void {
 		$application = \Skeleton\Core\Application::get();
 		unset($_SESSION[$application->config->sticky_session_name][$key]);
 	}
@@ -99,17 +95,20 @@ class Sticky {
 	 * Get as array
 	 *
 	 * @access public
-	 * @return array $variables
+	 * @return array<string> $variables
 	 */
-	public function get_as_array() {
+	public function get_as_array(): array {
 		$application = \Skeleton\Core\Application::get();
 		$variables = [];
+
 		if (!isset($_SESSION[$application->config->sticky_session_name])) {
 			return [];
 		}
+
 		foreach ($_SESSION[$application->config->sticky_session_name] as $key => $data) {
 			$variables[$key] = $data['data'];
 		}
+
 		return $variables;
 	}
 
@@ -117,12 +116,12 @@ class Sticky {
 	 * Get a Session object
 	 *
 	 * @access public
-	 * @return Session
 	 */
-	public static function get() {
+	public static function get(): self {
 		if (self::$sticky_session === null) {
 			self::$sticky_session = new self();
 		}
+
 		return self::$sticky_session;
 	}
 
@@ -132,7 +131,7 @@ class Sticky {
 	 * @access public
 	 * @param string $module
 	 */
-	public static function cleanup() {
+	public static function cleanup(): void {
 		$application = \Skeleton\Core\Application::get();
 		if (!isset($_SESSION[$application->config->sticky_session_name])) {
 			return;
