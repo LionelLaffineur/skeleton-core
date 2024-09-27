@@ -374,6 +374,7 @@ class Media {
 				$first = 0;
 			}
 		} elseif ($last === '' || $last > $filesize - 1) {
+			$first = (int)$first;
 			$last = $filesize - 1;
 		}
 
