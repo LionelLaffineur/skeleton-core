@@ -366,7 +366,7 @@ class Media {
 
 		if ($first === '') {
 			// suffix byte range: gets last n bytes
-			$suffix = $last;
+			$suffix = (int)$last;
 			$last = $filesize - 1;
 			$first = $filesize - $suffix;
 
@@ -376,6 +376,9 @@ class Media {
 		} elseif ($last === '' || $last > $filesize - 1) {
 			$first = (int)$first;
 			$last = $filesize - 1;
+		} else {
+			$first = (int)$first;
+			$last = (int)$last;
 		}
 
 		if ($first > $last) {
