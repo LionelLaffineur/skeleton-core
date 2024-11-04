@@ -65,6 +65,7 @@ class Media {
 			'png',
 			'ico',
 			'svg',
+			'webp',
 		],
 		'javascript' => [
 			'js',
