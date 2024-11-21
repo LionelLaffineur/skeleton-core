@@ -233,7 +233,7 @@ class Util {
 		}
 
 		if (count($params) > 0) {
-			$new_url .= '?' . urldecode(http_build_query($params));
+			$new_url .= '?' . http_build_query($params);
 		}
 
 		/**
