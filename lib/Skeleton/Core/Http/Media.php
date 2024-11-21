@@ -81,6 +81,13 @@ class Media {
 	];
 
 	/**
+	 * Flag to register whether media was served or not
+	 *
+	 * @access protected
+	 */
+	protected static bool $served = false;
+
+	/**
 	 * Constructor
 	 *
 	 * @access public
@@ -116,12 +123,23 @@ class Media {
 	 * @access public
 	 */
 	public function serve(): void {
+		self::$served = true;
+
 		// Send the Etag before potentially replying with 304
 		header('Etag: ' . crc32((string)$this->get_mtime()) . '-' . sha1($this->get_path()));
 		$this->http_if_modified();
 		$this->serve_cache();
 		$this->serve_content();
 		exit;
+	}
+
+	/**
+	 * Has media been served?
+	 *
+	 * @access public
+	 */
+	public static function is_served(): bool {
+		return self::$served;
 	}
 
 	/**

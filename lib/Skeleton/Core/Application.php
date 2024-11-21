@@ -123,10 +123,12 @@ abstract class Application {
 		\Skeleton\Core\Application::set($this);
 
 		$continue = $this->call_event('application', 'bootstrap', []);
+
+		register_shutdown_function([$this, 'call_event'], 'application', 'teardown', []);
+
 		if ($continue) {
 			$this->run();
 		}
-		$this->call_event('application', 'teardown', []);
 	}
 
 	/**
