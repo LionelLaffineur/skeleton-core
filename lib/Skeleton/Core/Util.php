@@ -21,7 +21,7 @@ class Util {
 	 */
 	public static function rewrite_reverse_html($html) {
 		$html = preg_replace_callback(
-			'@\<([^>]*) (href|src|action)="\/(?!\/)([^"]*?)@iU',
+			'@\<([^>]*)\s(href|src|action)="\/(?!\/)([^"]*?)@iU',
 			function ($matches) {
 				if (!isset($matches[3])) {
 					return $matches[0];
