@@ -22,7 +22,7 @@ class Util {
 	 */
 	public static function rewrite_reverse_html(string $html): string {
 		return preg_replace_callback(
-			'@\<([^>]*) (href|src|action)="\/(?!\/)([^"]*?)@iU',
+			'@\<([^>]*)\s(href|src|action)="\/(?!\/)([^"]*?)@iU',
 			static function($matches) {
 				if (!isset($matches[3])) {
 					return $matches[0];
