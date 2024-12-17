@@ -16,6 +16,7 @@ class Session {
 	 * Sticky session variables
 	 *
 	 * @access private
+	 * @var array $sticky
 	 */
 	private static ?\Skeleton\Core\Http\Session\Sticky $sticky = null;
 
@@ -46,12 +47,29 @@ class Session {
 	 * Redirect to
 	 *
 	 * @access public
+	 * @param string $url
+	 * @param bool $rewrite
 	 */
 	public static function redirect(string $url, bool $rewrite = true): void {
-		if ($rewrite) {
+		if ($rewrite === false) {
+			header('Location: '.$url);
+			echo 'Redirecting to : '.$url;
+			exit;
+		}
+
+		$application = \Skeleton\Core\Application::get();
+		if ($application->event_exists('rewrite', 'reverse_uri')) {
+			$url = $application->call_event('rewrite', 'reverse_uri', [ $url ]);
+		} else {
 			$url = \Skeleton\Core\Util::rewrite_reverse($url);
 		}
 
+/*
+		// Call teardown application event
+		$application = \Skeleton\Core\Application::get();
+		$application->call_event('application', 'teardown', []);
+*/
+		// Redirect
 		header('Location: '.$url);
 		echo 'Redirecting to : '.$url;
 		exit;
@@ -70,6 +88,8 @@ class Session {
 	 * Set a sticky session variable
 	 *
 	 * @access public
+	 * @param string $key
+	 * @param mixed $value
 	 */
 	public static function set_sticky(string $key, mixed $value): void {
 		if (self::$sticky === null) {

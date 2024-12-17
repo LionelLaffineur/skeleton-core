@@ -16,6 +16,7 @@ namespace Skeleton\Core;
 class Util {
 	/**
 	 * Reverse rewrite HTML documents
+	 * @deprecated: skeleton-application-web performs rewrite via event
 	 *
 	 * @access public
 	 * @return string $html
@@ -37,6 +38,7 @@ class Util {
 
 	/**
 	 * Reverse rewrite CSS documents
+	 * @deprecated: skeleton-application-web performs rewrite via event
 	 *
 	 * @access public
 	 * @return string $css
@@ -53,6 +55,7 @@ class Util {
 
 	/**
 	 * Do a reverse rewrite of a link
+	 * @deprecated: skeleton-application-web performs rewrite via event	 
 	 *
 	 * @access public
 	 * @return string $reverse_rewrite
@@ -76,6 +79,7 @@ class Util {
 
 	/**
 	 * Do a reverse rewrite of a link
+	 * @deprecated: skeleton-application-web performs rewrite via event
 	 *
 	 * @access private
 	 * @return string $reverse_rewrite
