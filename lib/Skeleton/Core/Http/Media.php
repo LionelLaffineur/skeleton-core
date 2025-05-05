@@ -78,6 +78,13 @@ class Media {
 			'mp4',
 			'mkv',
 		],
+		'audio' => [
+			'mp3',
+			'wav',
+			'm4a',
+			'ogg',
+			'flac'
+		]
 	];
 
 	/**
