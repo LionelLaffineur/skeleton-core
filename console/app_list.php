@@ -32,7 +32,7 @@ class Core_App_List extends \Skeleton\Console\Command {
 	 *
 	 * @access protected
 	 */
-	protected function execute(InputInterface $input, OutputInterface $output) {
+	protected function execute(InputInterface $input, OutputInterface $output): int {
 		$applications = \Skeleton\Core\Application::get_all();
 
 		$table = new Table($output);
