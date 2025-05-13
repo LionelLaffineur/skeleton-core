@@ -235,7 +235,7 @@ class Media {
 
 			// Search for the file in order provided in $filepaths
 			foreach ($filepaths as $filepath) {
-				if (file_exists($filepath)) {
+				if (is_file($filepath) === true) {
 					$this->path = $filepath;
 				}
 			}
