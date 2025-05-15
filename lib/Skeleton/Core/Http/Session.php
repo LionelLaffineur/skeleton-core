@@ -64,11 +64,6 @@ class Session {
 			$url = \Skeleton\Core\Util::rewrite_reverse($url);
 		}
 
-/*
-		// Call teardown application event
-		$application = \Skeleton\Core\Application::get();
-		$application->call_event('application', 'teardown', []);
-*/
 		// Redirect
 		header('Location: '.$url);
 		echo 'Redirecting to : '.$url;
