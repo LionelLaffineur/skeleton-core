@@ -177,6 +177,13 @@ class Media {
 	}
 
 	/**
+	 * Register filetype
+	 */
+	public static function register_filetype(string $name, array $extensions): void {
+		self::$filetypes[$name] = $extensions;
+	}
+
+	/**
 	 * Get path
 	 *
 	 * @access private
