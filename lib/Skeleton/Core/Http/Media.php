@@ -177,10 +177,44 @@ class Media {
 	}
 
 	/**
-	 * Register filetype
+	 * Add extension(s)
+	 * - if extension exists: not added
+	 * - if folder exists, reusing
+	 * - otherwise creating fresh
+	 *
+	 * @access public
+	 * @param string $name
+	 * @param array $extensions
 	 */
-	public static function register_filetype(string $name, array $extensions): void {
-		self::$filetypes[$name] = $extensions;
+	public static function add_extension(string $name, array $extensions): void {
+		$name = strtolower($name);
+		$extensions = array_change_key_case($extensions, CASE_LOWER);
+		$extensions = array_map('strtolower', $extensions);
+
+		foreach ($extensions as $extension) {
+			if (in_array($extension, array_merge(...array_values(self::$filetypes)))) {
+				continue;
+			}
+			if (isset(self::$filetypes[$name]) === false) {
+				self::$filetypes[$name] = [];
+			}
+			self::$filetypes[$name][] = $extension;
+		}
+	}
+
+	/**
+	 * Remove extension(s)
+	 *
+	 * @access public
+	 * @param array $extensions
+	 */
+	public static function remove_extension(array $extensions): void {
+		$extensions = array_change_key_case($extensions, CASE_LOWER);
+		$extensions = array_map('strtolower', $extensions);
+
+		foreach ($extensions as $extension) {
+			self::$filetypes = array_filter(array_map(function($subarray) use ($extension) { return array_values(array_diff($subarray, [$extension])); }, self::$filetypes));
+		}
 	}
 
 	/**
